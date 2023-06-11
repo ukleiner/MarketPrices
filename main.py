@@ -22,8 +22,6 @@ import xml.etree.ElementTree as ET
 
 from Item import Item
 
-
-
 _fn = "./data/Shufersal/PriceFull7290027600007-001-202306070300.xml"
 _targetManu = "קטיף."
 
@@ -100,6 +98,10 @@ def timing_tests(fn, targetManu, n=10):
     res1 = SAX_obtain(fn, targetManu)
     res2 = obtain_items(fn, targetManu)
     print(len(res1), len(res2))
-    t1 = timeit.timeit(lambda: ip(fn), number=n)
-    t2 = timeit.timeit(lambda: dp(fn), number=n)
+    t1 = timeit.timeit(lambda: SAX_obtain(fn, targetManu), number=n)
+    t2 = timeit.timeit(lambda: obtain_items(fn, targetManu), number=n)
     print(t1, t2)
+
+if __name__ == '__main__':
+    parsedItems = obtain_items(_fn, _targetManu)
+    print(parsedItems[0].code)
