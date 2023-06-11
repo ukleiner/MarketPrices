@@ -1,16 +1,10 @@
 class Item:
-    def __init__(self, xmlObject):
-        self.obj = xmlObject
-        self._parse()
+    def __init__(self, chain, store, xmlObject):
+        self.chain = chain
+        self.store = store
+        self._parse(xmlObject)
 
     def _parse(self):
-        # PriceUpdateDate
-        # ItemName
-        # ManufacturerName
-        # ManufactureCountry
-        # UnitOfMeasure
-        # UnitOfMeasurePrice
-#      <PriceUpdateDate>2022-03-27 15:09</PriceUpdateDate>
         for elem in self.obj.iter():
             if elem.tag == 'ItemCode':
                 self.code = elem.text
