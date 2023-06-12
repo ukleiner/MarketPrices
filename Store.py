@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 from Item import Item
 
 class Store:
-    def __init__(self, db, fn, targetManu):
+    def __init__(self, db, fn, targetManu, chainId, chain):
         '''
         Initialize a store inside a chain
         ---------------------
@@ -10,6 +10,8 @@ class Store:
             db -  handle to DB
             fn - filename
             targetManu - manufacturer to taret it's products
+            chainId - chain external ID
+            chain - chain internal ID
         =====================
         Return:
             Store object
@@ -17,6 +19,8 @@ class Store:
         self.db = db
         self.fn = fn
         self.manu = targetManu
+        self.chainId = chainId
+        self.chain = chain
         self.context = ET.parse(fn)
         self._store_details(self.context)
 
@@ -33,25 +37,22 @@ class Store:
             Side effects:
                 sets the store values in the object
         '''
-        self.chain = int(context.find('ChainId').text)
+        fileChain = int(context.find('ChainId').text)
+        if fileChain != self.chainId:
+            # TODO make special error for this case, wrong file
+            raise TypeError
         self.subChain = int(context.find('SubChainId').text)
         self.store = int(context.find('StoreId').text)
+        # TODO raise special error if store missing to tirgger store update
+        self.checkStoreExists()
 
-    def check_subchain_exists(self):
-        con = self.db.getConn()
-        cur = con.cursor()
-        query = "SELECT id FROM subchain WHERE subchainId = ?"
-        cur.execute(query, (self.subChain,))
-        res = cur.fetchone()
-        return res.id
-
-    def check_store_exists(self):
+    def checkStoreExists(self):
         con = self.db.getConn()
         cur = con.cursor()
         query = "SELECT id FROM store WHERE store = ?"
-        cur.execute(query, (self.subChain,))
-        res = cur.fetchone()
-        return res.id
+        cur.execute(query, (self.store,))
+        sid, = cur.fetchone()
+        return sid
 
     def obtain_items(fn, targetManu):
         '''

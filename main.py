@@ -19,10 +19,12 @@
 import tracemalloc
 import timeit
 
+from Chain import Chain
 from Store import Store
 from DBConn import DB
 
 _fn = "./data/Shufersal/PriceFull7290027600007-001-202306070300.xml"
+_storefn = "./data/Shufersal/Stores7290027600007-000-202306110201.xml"
 _targetManu = "קטיף."
 
 def SAX_obtain(fn, targetManu):
@@ -87,7 +89,10 @@ def timing_tests(fn, targetManu, n=10):
 
 if __name__ == '__main__':
     dbc = DB()
-    store1 = Store(dbc, _fn, _targetManu)
-    store1.check_chain_exists()
+    #dbc.dbStruct()
+    chain1 = Chain(dbc, None, None, None, "Shufersal", 7290027600007)
+    print(chain1.fileList())
+    #chain1.obtainStores(_storefn)
+    # store1 = Store(dbc, _fn, _targetManu)
     # parsedItems = obtain_items(_fn, _targetManu)
     # print(parsedItems[0].code)

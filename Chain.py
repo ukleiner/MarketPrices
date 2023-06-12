@@ -3,6 +3,8 @@ import re
 import datetime
 import xml.etree.ElementTree as ET
 
+from Store import Store
+
 class Chain:
     '''
     The basic functions each Chain should implement
@@ -18,6 +20,8 @@ class Chain:
 
         self.priceR = re.compile('^PriceFull')
         self.dateR = re.compile('-(\d{8})\d{4}\.xml')
+
+
 
         try:
             self.setChain()
@@ -57,6 +61,11 @@ class Chain:
             # TODO filter used files
         except TypeError:
             return priceFiles
+
+    def scanStores(self):
+        files = self.fileList()
+        for fn in files:
+            store = Store(self.db, fn, self.targetManu, self.chainId)
 
     def getChain(self, chain):
         con = self.db.getConn()
