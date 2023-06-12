@@ -42,18 +42,13 @@ class Store:
         query = "SELECT id FROM chain WHERE chainId = ?"
         cur.execute(query, (self.chain,))
         res = cur.fetchone()
-        if res.id is None:
-            # throw error
-            pass
         return res.id
+
     def check_subchain_exists(self):
         cur = self.db.getCursor()
         query = "SELECT id FROM subchain WHERE subchainId = ?"
         cur.execute(query, (self.subChain,))
         res = cur.fetchone()
-        if res.id is None:
-            # throw error
-            pass
         return res.id
 
     def check_store_exists(self):
@@ -61,9 +56,6 @@ class Store:
         query = "SELECT id FROM store WHERE store = ?"
         cur.execute(query, (self.subChain,))
         res = cur.fetchone()
-        if res.id is None:
-            # throw error
-            pass
         return res.id
 
     def obtain_items(fn, targetManu):

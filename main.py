@@ -19,6 +19,9 @@
 import tracemalloc
 import timeit
 
+from Store import Store
+from DBConn import DB
+
 _fn = "./data/Shufersal/PriceFull7290027600007-001-202306070300.xml"
 _targetManu = "קטיף."
 
@@ -83,5 +86,8 @@ def timing_tests(fn, targetManu, n=10):
     print(t1, t2)
 
 if __name__ == '__main__':
-    parsedItems = obtain_items(_fn, _targetManu)
-    print(parsedItems[0].code)
+    dbc = DB()
+    store1 = Store(dbc, _fn, _targetManu)
+    store1.check_chain_exists()
+    # parsedItems = obtain_items(_fn, _targetManu)
+    # print(parsedItems[0].code)
