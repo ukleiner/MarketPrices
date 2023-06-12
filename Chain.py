@@ -29,8 +29,12 @@ class Chain:
             # so it can trigger obtainStores
             self.updateChain()
 
-    def _todatetime(self, date):
-        return datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]))
+    def download(self):
+        update_date = self._getLatestDate()
+        pass
+
+    def getStoreFile(self):
+        pass
 
     def updateChain(self):
         storeFile = self.getStoreFile()
@@ -38,34 +42,6 @@ class Chain:
 
     def setChain(self):
         self.chain = self.getChain(self.chainId)
-
-    def download(self):
-        pass
-
-    def getStoreFile(self):
-        pass
-
-    def _getLatestDate(self):
-        con = self.db.getConn()
-        cur = con.cursor()
-        query = '''SELECT price.update_date
-        FROM price
-        INNER JOIN item on price.item = item.id
-        INNER JOIN item_link on item.id = item_link.item
-        INNER JOIN storeItem ON item_link.storeItem = storeItem.id
-        INNER JOIN store ON storeItem.store = store.id
-        WHERE store.chain = ?
-        ORDER BY price.update_date DESC
-        LIMIT 1
-        '''
-        cur.execute(query, (self.chain,))
-        try:
-            update_date, = cur.fetchone()
-            # TODO filter used files
-        except TypeError:
-            update_date = None
-        return update_date
-
 
     def fileList(self):
         update_date = self.getLatestDate()
@@ -95,14 +71,6 @@ class Chain:
         cid, = cur.fetchone()
         return cid
 
-    def insertChain(self, chain):
-        con = self.db.getConn()
-        cur = con.cursor()
-        query = "INSERT INTO chain (`chainId`, `chainName`) VALUES(?, ?)"
-        cur.execute(query, (chain, self.name))
-        con.commit()
-        return cur.lastrowid
-
     def getSubchains(self, chain):
         '''
             Fetch subchains internal Id conversion from chain Id
@@ -119,14 +87,6 @@ class Chain:
         cur.execute(query, (chain,))
         return({sc.subchainId: sc.id for sc in cur.fetchall()})
 
-    def createSubchain(self, chain, subchain, name):
-        con = self.db.getConn()
-        cur = con.cursor()
-        query = "INSERT INTO subchain (`chain`, `subchainId`, `name`) VALUES(?,?,?)"
-        cur.execute(query, (chain, subchain, name))
-        con.commit()
-        return cur.lastrowid
-
     def getStores(self, chain):
         '''
             Fetch storeinternal Id conversion from chain Id
@@ -142,22 +102,6 @@ class Chain:
         query = "SELECT id, store FROM store WHERE chain = ?"
         cur.execute(query, (chain,))
         return({store.store: store.id for store in cur.fetchall()})
-
-    def createStores(self, stores, storeLinks):
-        con = self.db.getConn()
-        cur = con.cursor()
-        storeQuery = "INSERT INTO store (`chain`, `store`, `name`, `city`) VALUES(?,?,?,?)"
-        cur.executemany(storeQuery, stores.values())
-        con.commit()
-
-        newStoresQ = f"SELECT id, store FROM store WHERE store IN ({','.join(['?']*len(stores))})"
-        cur.execute(newStoresQ, list(stores.keys()))
-        storeIds = { store: sid for sid, store in cur.fetchall() }
-        realLinks = [[subchain, storeIds[store]] for store, subchain in storeLinks.items()]
-
-        linkQ = "INSERT INTO store_link (`subchain`,`store`) VALUES(?,?)"
-        cur.executemany(linkQ, realLinks)
-        con.commit()
 
     def obtainStores(self, fn):
         '''
@@ -208,3 +152,62 @@ class Chain:
             storeLinks[storeId] = subchain
 
         self.createStores(storesIns, storeLinks)
+
+    def insertChain(self, chain):
+        con = self.db.getConn()
+        cur = con.cursor()
+        query = "INSERT INTO chain (`chainId`, `chainName`) VALUES(?, ?)"
+        cur.execute(query, (chain, self.name))
+        con.commit()
+        return cur.lastrowid
+
+    def createSubchain(self, chain, subchain, name):
+        con = self.db.getConn()
+        cur = con.cursor()
+        query = "INSERT INTO subchain (`chain`, `subchainId`, `name`) VALUES(?,?,?)"
+        cur.execute(query, (chain, subchain, name))
+        con.commit()
+        return cur.lastrowid
+
+    def createStores(self, stores, storeLinks):
+        con = self.db.getConn()
+        cur = con.cursor()
+        storeQuery = "INSERT INTO store (`chain`, `store`, `name`, `city`) VALUES(?,?,?,?)"
+        cur.executemany(storeQuery, stores.values())
+        con.commit()
+
+        newStoresQ = f"SELECT id, store FROM store WHERE store IN ({','.join(['?']*len(stores))})"
+        cur.execute(newStoresQ, list(stores.keys()))
+        storeIds = { store: sid for sid, store in cur.fetchall() }
+        realLinks = [[subchain, storeIds[store]] for store, subchain in storeLinks.items()]
+
+        linkQ = "INSERT INTO store_link (`subchain`,`store`) VALUES(?,?)"
+        cur.executemany(linkQ, realLinks)
+        con.commit()
+
+
+     # ========== PRIVATE ==========
+    def _todatetime(self, date):
+        return datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]))
+
+    def _getLatestDate(self):
+        con = self.db.getConn()
+        cur = con.cursor()
+        query = '''SELECT price.update_date
+        FROM price
+        INNER JOIN item on price.item = item.id
+        INNER JOIN item_link on item.id = item_link.item
+        INNER JOIN storeItem ON item_link.storeItem = storeItem.id
+        INNER JOIN store ON storeItem.store = store.id
+        WHERE store.chain = ?
+        ORDER BY price.update_date DESC
+        LIMIT 1
+        '''
+        cur.execute(query, (self.chain,))
+        try:
+            update_date, = cur.fetchone()
+            # TODO filter used files
+        except TypeError:
+            update_date = None
+        return update_date
+
