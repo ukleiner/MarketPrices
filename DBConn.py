@@ -4,8 +4,8 @@ class DB:
     def __init__(self):
         self.con = sqlite3.connect('agriItems.db')
 
-    def getCursor(self):
-        return self.con.cursor()
+    def getConn(self):
+        return self.con
 
     def logPrice(self, chain, store, items):
         query = '''INSERT INTO price (`item`, `update_date`, `price`)
@@ -20,6 +20,7 @@ class DB:
         self.createChains()
         self.createSubchains()
         self.createStores()
+        self.linkSubChainStore()
         self.createStoreItems()
         self.createPrices()
         self.createItems()
