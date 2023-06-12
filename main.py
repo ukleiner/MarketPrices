@@ -18,29 +18,9 @@
 
 import tracemalloc
 import timeit
-import xml.etree.ElementTree as ET
-
-from Item import Item
 
 _fn = "./data/Shufersal/PriceFull7290027600007-001-202306070300.xml"
 _targetManu = "קטיף."
-
-def obtain_items(fn, targetManu):
-    '''
-        Obtain wanted items from XML file by parsing the whole file and extracting the items
-        ---------------------
-        Parameters:
-            fn - file name
-            targetManu - which manufacturer's items to get
-        =====================
-        Return:
-            list of Item objects
-        Side effects:
-    '''
-    context = ET.parse(fn)
-    search_path = f'Items/Item/ManufacturerName[.="{targetManu}"]...'
-    xmlItems = context.findall(search_path)
-    return([Item(xmlItem) for xmlItem in xmlItems])
 
 def SAX_obtain(fn, targetManu):
     '''
