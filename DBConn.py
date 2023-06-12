@@ -56,13 +56,25 @@ class DB:
         query = '''CREATE TABLE IF NOT EXISTS store (
         id INTEGER PRIMARY KEY,
         Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        subchain INTEGER NOT NULL,
+        chain INTEGER NOT NULL,
         store INTEGER NOT NULL,
         name TEXT NOT NULL,
         city TEXT,
-        FOREIGN KEY(subchain) REFERENCES subchain(id)
+        FOREIGN KEY(chain) REFERENCES chain(id)
         )'''
         self.cur.execute(query)
+
+    def linkSubChainStore(self):
+        query = '''CREATE TABLE IF NOT EXISTS store_link (
+        id INTEGER PRIMARY KEY,
+        Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        subchain INTEGER NOT NULL,
+        store INTEGER NOT NULL,
+        FOREIGN KEY(subchain) REFERENCES subchain(id)
+        FOREIGN KEY(store) REFERENCES store(id)
+        )'''
+        self.cur.execute(query)
+
 
     def createStoreItems(self):
         query = '''CREATE TABLE IF NOT EXISTS storeItem (
