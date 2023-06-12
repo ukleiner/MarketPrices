@@ -2,7 +2,19 @@ import xml.etree.ElementTree as ET
 from Item import Item
 
 class Store:
-    def __init__(self, fn, targetManu):
+    def __init__(self, db, fn, targetManu):
+        '''
+        Initialize a store inside a chain
+        ---------------------
+        Parameters:
+            db -  handle to DB
+            fn - filename
+            targetManu - manufacturer to taret it's products
+        =====================
+        Return:
+            Store object
+        '''
+        self.db = db
         self.fn = fn
         self.manu = targetManu
         self.context = ET.parse(fn)
@@ -10,16 +22,49 @@ class Store:
 
 
     def _store_details(self, context):
+        '''
+            Get store details from a store prices file
+            ---------------------
+            Parameters:
+                context - xml object
+            =====================
+            Return:
+                Nothing
+            Side effects:
+                sets the store values in the object
+        '''
         self.chain = int(context.find('ChainId').text)
         self.subChain = int(context.find('SubChainId').text)
         self.store = int(context.find('StoreId').text)
 
     def check_chain_exists(self):
-        pass
+        cur = self.db.getCursor()
+        query = "SELECT id FROM chain WHERE chainId = ?"
+        cur.execute(query, (self.chain,))
+        res = cur.fetchone()
+        if res.id is None:
+            # throw error
+            pass
+        return res.id
     def check_subchain_exists(self):
-        pass
+        cur = self.db.getCursor()
+        query = "SELECT id FROM subchain WHERE subchainId = ?"
+        cur.execute(query, (self.subChain,))
+        res = cur.fetchone()
+        if res.id is None:
+            # throw error
+            pass
+        return res.id
+
     def check_store_exists(self):
-        pass
+        cur = self.db.getCursor()
+        query = "SELECT id FROM store WHERE store = ?"
+        cur.execute(query, (self.subChain,))
+        res = cur.fetchone()
+        if res.id is None:
+            # throw error
+            pass
+        return res.id
 
     def obtain_items(fn, targetManu):
         '''
