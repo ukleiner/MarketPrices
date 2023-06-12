@@ -83,7 +83,9 @@ class Chain:
                 list of Item objects
         '''
         context = ET.parse(fn)
-        chainId = int(context.find('CHAINID').text)
+        root = context.getroot()
+        print(root)
+        chainId = int(root.find('CHAINID').text)
         try:
             chain = self.getChain(chainId)
         except AttributeError:
@@ -92,7 +94,7 @@ class Chain:
         subchains = self.getSubchains(chain)
         stores = self.getStores(chain)
 
-        storesElem = context.find('STORES')
+        storesElem = root.find('STORES')
         storesIns = {}
         for store in storesElem.iter():
             storeId = store.find("STOREID")

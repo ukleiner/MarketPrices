@@ -33,9 +33,10 @@ class Store:
             Side effects:
                 sets the store values in the object
         '''
-        self.chain = int(context.find('ChainId').text)
-        self.subChain = int(context.find('SubChainId').text)
-        self.store = int(context.find('StoreId').text)
+        root = context.getroot()
+        self.chain = int(root.find('ChainId').text)
+        self.subChain = int(root.find('SubChainId').text)
+        self.store = int(root.find('StoreId').text)
 
     def check_subchain_exists(self):
         cur = self.db.getCursor()
@@ -64,6 +65,7 @@ class Store:
             Side effects:
         '''
         search_path = f'Items/Item/ManufacturerName[.="{targetManu}"]...'
-        xmlItems = context.findall(search_path)
+        root = context.getroot()
+        xmlItems = root.findall(search_path)
         return([Item(xmlItem) for xmlItem in xmlItems])
 
