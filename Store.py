@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+from CustomExceptions import WrongChainFileException, NoStoreException
 from Item import Item
 
 class Store:
@@ -39,12 +40,14 @@ class Store:
         '''
         fileChain = int(context.find('ChainId').text)
         if fileChain != self.chainId:
-            # TODO make special error for this case, wrong file
-            raise TypeError
+            raise WrongChainFileException
         self.subChain = int(context.find('SubChainId').text)
         self.store = int(context.find('StoreId').text)
         # TODO raise special error if store missing to tirgger store update
-        self.checkStoreExists()
+        try:
+            self.checkStoreExists()
+        except TypeError:
+            raise NoStoreException
 
     def checkStoreExists(self):
         con = self.db.getConn()
