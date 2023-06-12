@@ -1,24 +1,70 @@
+import os
+import re
+import datetime
 import xml.etree.ElementTree as ET
 
 class Chain:
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, url, username, password, name):
+    def __init__(self, db, url, username, password, name, chainId):
         self.db = db
         self.name = name
+        self.chainId = chainId
+        self.dirname = f"./data/{name}"
+        self.url = url
+        self.username = username
+        self.password = password
+
+        self.priceR = re.compile('^PriceFull')
+        self.dateR = re.compile('-(\d{8})\d{4}\.xml')
+
+        try:
+            self.setChain()
+        except TypeError:
+            # TODO alert the user in some way about this
+            # so it can trigger obtainStores
+            pass
+
+    def _todatetime(self, date):
+        return datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]))
+
+    def setChain(self):
+        self.chain = self.getChain(self.chainId)
+
+    def download(self):
         pass
 
-    def get():
-        pass
+    def fileList(self):
+        con = self.db.getConn()
+        cur = con.cursor()
+        query = '''SELECT price.update_date
+        FROM price
+        INNER JOIN item on price.item = item.id
+        INNER JOIN item_link on item.id = item_link.item
+        INNER JOIN storeItem ON item_link.storeItem = storeItem.id
+        INNER JOIN store ON storeItem.store = store.id
+        WHERE store.chain = ?
+        ORDER BY price.update_date DESC
+        LIMIT 1
+        '''
+        cur.execute(query, (self.chain,))
+        filenames = next(os.walk(self.dirname), (None, None, []))[2]
+        priceFiles = [f for f in filenames if self.priceR.match(f)]
+        matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
+        try:
+            update_date, = cur.fetchone()
+            # TODO filter used files
+        except TypeError:
+            return priceFiles
 
     def getChain(self, chain):
         con = self.db.getConn()
         cur = con.cursor()
         query = "SELECT id FROM chain WHERE chainId = ?"
         cur.execute(query, (chain,))
-        res = cur.fetchone()
-        return res.id
+        cid, = cur.fetchone()
+        return cid
 
     def insertChain(self, chain):
         con = self.db.getConn()
@@ -97,6 +143,9 @@ class Chain:
         context = ET.parse(fn)
         c = 0
         chainId = int(context.find('.//CHAINID').text)
+        if chainId != self.chain:
+            # chainId in file should be like setup
+            raise Exception
         try:
             chain = self.getChain(chainId)
         except AttributeError:
