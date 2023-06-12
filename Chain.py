@@ -13,16 +13,19 @@ class Chain:
         pass
 
     def getChain(self, chain):
-        cur = self.db.getCursor()
+        con = self.db.getConn()
+        cur = con.cursor()
         query = "SELECT id FROM chain WHERE chainId = ?"
         cur.execute(query, (chain,))
         res = cur.fetchone()
         return res.id
 
     def insertChain(self, chain):
-        cur = self.db.getCursor()
+        con = self.db.getConn()
+        cur = con.cursor()
         query = "INSERT INTO chain (`chainId`, `chainName`) VALUES(?, ?)"
         cur.execute(query, (chain, self.name))
+        con.commit()
         return cur.lastrowid
 
     def getSubchains(self, chain):
@@ -35,15 +38,18 @@ class Chain:
             Return:
                dict of subchain (external) to subchain (internal)
         '''
-        cur = self.db.getCursor()
+        con = self.db.getConn()
+        cur = con.cursor()
         query = "SELECT id,subchainId FROM subchain WHERE chain = ?"
         cur.execute(query, (chain,))
         return({sc.subchainId: sc.id for sc in cur.fetchall()})
 
     def createSubchain(self, chain, subchain, name):
-        cur = self.db.getCursor()
+        con = self.db.getConn()
+        cur = con.cursor()
         query = "INSERT INTO subchain (`chain`, `subchainId`, `name`) VALUES(?,?,?)"
         cur.execute(query, (chain, subchain, name))
+        con.commit()
         return cur.lastrowid
 
     def getStores(self, chain):
@@ -53,25 +59,30 @@ class Chain:
             Parameters:
                 chain - internal chain id
             =====================
-            Return:
+             Return:
             dict store (external) to store (internal)
         '''
-        cur = self.db.getCursor()
+        con = self.db.getConn()
+        cur = con.cursor()
         query = "SELECT id, store FROM store WHERE chain = ?"
         cur.execute(query, (chain,))
         return({store.store: store.id for store in cur.fetchall()})
 
     def createStores(self, stores, storeLinks):
-        cur = self.db.getCursor()
-        print(stores)
+        con = self.db.getConn()
+        cur = con.cursor()
         storeQuery = "INSERT INTO store (`chain`, `store`, `name`, `city`) VALUES(?,?,?,?)"
         cur.executemany(storeQuery, stores.values())
+        con.commit()
+
         newStoresQ = f"SELECT id, store FROM store WHERE store IN ({','.join(['?']*len(stores))})"
         cur.execute(newStoresQ, list(stores.keys()))
         storeIds = { store: sid for sid, store in cur.fetchall() }
         realLinks = [[subchain, storeIds[store]] for store, subchain in storeLinks.items()]
+
         linkQ = "INSERT INTO store_link (`subchain`,`store`) VALUES(?,?)"
         cur.executemany(linkQ, realLinks)
+        con.commit()
 
     def obtainStores(self, fn):
         '''
