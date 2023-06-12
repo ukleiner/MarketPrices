@@ -61,7 +61,18 @@ class Chain:
         cur.execute(query, (chain,))
         return({store.store: store.id for store in cur.fetchall()})
 
-    def obtainStores(fn):
+    def createStores(self, stores, storeLinks):
+        cur = self.db.getCursor()
+        storeQuery = "INSERT INTO store (`chain`, `store`, `name`, city`) VALUES(?,?,?,?)"
+        cur.executemany(query, stores)
+        newStoresQ = "SELECT id, store FROM store WHERE store IN ?"
+        cur.execute(newStoresQ, list(stores.keys()))
+        storeIds = { s.store: s.id for s in cur.fetchall() }
+        realLinks = [[subchain, storeIds[store]] for store, subhcain in storeLinks.items()]
+        linkQ = "INSERT INTO store_link (`subchain`,`store`) VALUES(?,?)"
+        cur.executemany(linkQ, realLinks)
+
+    def obtainStores(self, fn):
         '''
             Obtain chain stores
             ---------------------
@@ -84,18 +95,21 @@ class Chain:
         storesElem = context.find('STORES')
         storesIns = {}
         for store in storesElem.iter():
+            storeId = store.find("STOREID")
+            if storeId in stores:
+                continue
+
             subchainId = store.find('SUBCHAINID')
             if subchainId not in subchains:
                 scname = store.find('SUBCHAINNAME')
                 subchain = self.createSubchain(chain, subchainId, name)
                 subchains[subchainId] = subchain
+
             subchain = subchains[subchainId]
-            store = store.find("STOREID")
             storeName = store.find("STORENAME")
             city = store.find("CITY")
-            stores[store] = [chain, store, storeName, city]
-            storeLinks[store] = [subchain, store]
 
+            storesIns[storeId] = [chain, storeId, storeName, city]
+            storeLinks[storeId] = subchain
 
-
-
+        self.creteStores(storesIns, storeLinks)
