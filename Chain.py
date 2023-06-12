@@ -32,6 +32,10 @@ class Chain:
     def _todatetime(self, date):
         return datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]))
 
+    def updateChain(self):
+        storeFile = self.getStoreFile()
+        self.obtainStores(storeFile)
+
     def setChain(self):
         self.chain = self.getChain(self.chainId)
 
