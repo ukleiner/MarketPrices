@@ -3,6 +3,7 @@ import re
 import datetime
 import xml.etree.ElementTree as ET
 
+from CustomExceptions import WrongChainFileException, NoStoreException
 from Store import Store
 
 class Chain:
@@ -21,14 +22,12 @@ class Chain:
         self.priceR = re.compile('^PriceFull')
         self.dateR = re.compile('-(\d{8})\d{4}\.xml')
 
-
-
         try:
             self.setChain()
         except TypeError:
             # TODO alert the user in some way about this
             # so it can trigger obtainStores
-            pass
+            self.updateChain()
 
     def _todatetime(self, date):
         return datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]))
@@ -63,9 +62,15 @@ class Chain:
             return priceFiles
 
     def scanStores(self):
+        repeat = True
         files = self.fileList()
         for fn in files:
-            store = Store(self.db, fn, self.targetManu, self.chainId)
+            try:
+                store = Store(self.db, fn, self.targetManu, self.chainId)
+                items = store.obtainItems()
+            except NoStoreException:
+                # TODO handle this
+                pass
 
     def getChain(self, chain):
         con = self.db.getConn()
@@ -154,7 +159,7 @@ class Chain:
         chainId = int(context.find('.//CHAINID').text)
         if chainId != self.chain:
             # chainId in file should be like setup
-            raise Exception
+            raise WrongChainFileException
         try:
             chain = self.getChain(chainId)
         except AttributeError:
