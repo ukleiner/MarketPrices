@@ -42,7 +42,10 @@ class Chain:
     def download(self):
         pass
 
-    def fileList(self):
+    def getStoreFile(self):
+        pass
+
+    def _getLatestDate(self):
         con = self.db.getConn()
         cur = con.cursor()
         query = '''SELECT price.update_date
@@ -56,14 +59,22 @@ class Chain:
         LIMIT 1
         '''
         cur.execute(query, (self.chain,))
-        filenames = next(os.walk(self.dirname), (None, None, []))[2]
-        priceFiles = [f for f in filenames if self.priceR.match(f)]
-        matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
         try:
             update_date, = cur.fetchone()
             # TODO filter used files
         except TypeError:
-            return priceFiles
+            update_date = None
+        return update_date
+
+
+    def fileList(self):
+        update_date = self.getLatestDate()
+        filenames = next(os.walk(self.dirname), (None, None, []))[2]
+        if update_date is None:
+            priceFiles = [f for f in filenames if self.priceR.match(f)]
+        else:
+            matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
+            return [file for key, file in matchPrice if key > update_date]
 
     def scanStores(self):
         repeat = True
