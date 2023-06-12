@@ -38,14 +38,16 @@ class Store:
         self.store = int(context.find('StoreId').text)
 
     def check_subchain_exists(self):
-        cur = self.db.getCursor()
+        con = self.db.getConn()
+        cur = con.cursor()
         query = "SELECT id FROM subchain WHERE subchainId = ?"
         cur.execute(query, (self.subChain,))
         res = cur.fetchone()
         return res.id
 
     def check_store_exists(self):
-        cur = self.db.getCursor()
+        con = self.db.getConn()
+        cur = con.cursor()
         query = "SELECT id FROM store WHERE store = ?"
         cur.execute(query, (self.subChain,))
         res = cur.fetchone()
