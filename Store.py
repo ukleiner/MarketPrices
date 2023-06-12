@@ -37,13 +37,6 @@ class Store:
         self.subChain = int(context.find('SubChainId').text)
         self.store = int(context.find('StoreId').text)
 
-    def check_chain_exists(self):
-        cur = self.db.getCursor()
-        query = "SELECT id FROM chain WHERE chainId = ?"
-        cur.execute(query, (self.chain,))
-        res = cur.fetchone()
-        return res.id
-
     def check_subchain_exists(self):
         cur = self.db.getCursor()
         query = "SELECT id FROM subchain WHERE subchainId = ?"
