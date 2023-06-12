@@ -25,7 +25,7 @@ class Chain:
         cur.execute(query, (chain, self.name))
         return cur.lastrowid
 
-    def getSubChains(self, chain):
+    def getSubchains(self, chain):
         '''
             Fetch subchains internal Id conversion from chain Id
             ---------------------
@@ -63,12 +63,13 @@ class Chain:
 
     def createStores(self, stores, storeLinks):
         cur = self.db.getCursor()
-        storeQuery = "INSERT INTO store (`chain`, `store`, `name`, city`) VALUES(?,?,?,?)"
-        cur.executemany(query, stores)
-        newStoresQ = "SELECT id, store FROM store WHERE store IN ?"
+        print(stores)
+        storeQuery = "INSERT INTO store (`chain`, `store`, `name`, `city`) VALUES(?,?,?,?)"
+        cur.executemany(storeQuery, stores.values())
+        newStoresQ = f"SELECT id, store FROM store WHERE store IN ({','.join(['?']*len(stores))})"
         cur.execute(newStoresQ, list(stores.keys()))
-        storeIds = { s.store: s.id for s in cur.fetchall() }
-        realLinks = [[subchain, storeIds[store]] for store, subhcain in storeLinks.items()]
+        storeIds = { store: sid for sid, store in cur.fetchall() }
+        realLinks = [[subchain, storeIds[store]] for store, subchain in storeLinks.items()]
         linkQ = "INSERT INTO store_link (`subchain`,`store`) VALUES(?,?)"
         cur.executemany(linkQ, realLinks)
 
@@ -83,7 +84,6 @@ class Chain:
                 list of Item objects
         '''
         context = ET.parse(fn)
-        print(context.find(".//CHAINID"))
         c = 0
         chainId = int(context.find('.//CHAINID').text)
         try:
@@ -96,22 +96,26 @@ class Chain:
 
         storesElem = context.find('.//STORES')
         storesIns = {}
-        for store in storesElem.iter():
-            storeId = store.find("STOREID")
+        storeLinks = {}
+        for store in storesElem:
+            if store.tag == "STORES":
+                continue
+
+            storeId = int(store.find("STOREID").text)
             if storeId in stores:
                 continue
 
-            subchainId = store.find('SUBCHAINID')
+            subchainId = store.find('SUBCHAINID').text
             if subchainId not in subchains:
-                scname = store.find('SUBCHAINNAME')
-                subchain = self.createSubchain(chain, subchainId, name)
+                scname = store.find('SUBCHAINNAME').text
+                subchain = self.createSubchain(chain, subchainId, scname)
                 subchains[subchainId] = subchain
 
             subchain = subchains[subchainId]
-            storeName = store.find("STORENAME")
-            city = store.find("CITY")
+            storeName = store.find("STORENAME").text
+            city = store.find("CITY").text
 
             storesIns[storeId] = [chain, storeId, storeName, city]
             storeLinks[storeId] = subchain
 
-        self.creteStores(storesIns, storeLinks)
+        self.createStores(storesIns, storeLinks)
