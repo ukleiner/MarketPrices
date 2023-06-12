@@ -25,6 +25,28 @@ class Chain:
         cur.execute(query, (chain, self.name))
         return cur.lastrowid
 
+    def getSubChains(self, chain):
+        '''
+            Fetch subchains internal Id conversion from chain Id
+            ---------------------
+            Parameters:
+                chain - chain internal ID
+            =====================
+            Return:
+               dict of subchain (external) to subchain (internal)
+        '''
+        cur = self.db.getCursor()
+        query = "SELECT id,subchainId FROM subchain WHERE chain = ?"
+        cur.execute(query, (chain,))
+        return({sc.subchainId: sc.id for sc in cur.fetchall()})
+
+    def createSubchain(self, chain, subchain, name):
+        cur = self.db.getCursor()
+        query = "INSERT INTO subchain (`chain`, `subchainId`, `name`) VALUES(?,?,?)"
+        cur.execute(query, (chain, subchain, name))
+        return cur.lastrowid
+
+
     def obtainStores(fn):
         '''
             Obtain chain stores
@@ -42,12 +64,15 @@ class Chain:
         except AttributeError:
             chain = self.insertChain(chainId)
 
+        subchains = self.getSubchains(chain)
+
         storesElem = context.find('STORES')
-        subchains = {}
         stores = []
         for storein storesElem.iter():
-            subchain = store.find('SUBCHAINID')
-            if subchain not in subchains:
-                subchains[subchain] = [
-                        subchin
-                        ]
+            subchainId = store.find('SUBCHAINID')
+            if subchainId not in subchains:
+                scname = store.find('SUBCHAINNAME')
+                subchain = self.createSubchain(chain, subchainId, name)
+                subchains[subchainId] = subchain
+
+
