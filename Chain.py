@@ -2,6 +2,9 @@ import os
 import re
 import datetime
 import xml.etree.ElementTree as ET
+from lxml import etree
+
+import requests
 
 from CustomExceptions import WrongChainFileException, NoStoreException
 from Store import Store
@@ -20,6 +23,7 @@ class Chain:
         self.password = password
 
         self.priceR = re.compile('^PriceFull')
+        self.storeR = re.compile('^Stores')
         self.dateR = re.compile('-(\d{8})\d{4}\.xml')
 
         try:
@@ -30,11 +34,35 @@ class Chain:
             self.updateChain()
 
     def download(self):
+        url =f'{self.url}/FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=ASC'
         update_date = self._getLatestDate()
         pass
 
     def getStoreFile(self):
-        pass
+        url =f'http://{self.url}/FileObject/UpdateCategory?catID=5'
+        r = requests.get(url)
+        # print(r.text)
+        # with open("./shufresp.txt", "r") as f:
+            # html = f.read()
+        html = r.text
+        table = etree.HTML(html).find("body/div/table/tbody")
+        storeFileName = None
+        link = None
+
+        for elem in table.iter():
+            if elem.tag == "td":
+                if elem.text is None:
+                    link = elem.find('a').get('href')
+                    link = "".join(link.split())
+                else:
+                    if self.storeR.search(elem.text):
+                        storeFileName = elem.text
+                if storeFileName is not None and link is not None:
+                    break
+        storeData = requests.get(link)
+        with open(f'{self.dirname}/{storeFileName}.gz', 'wb') as f:
+            f.write(storeData.content)
+
 
     def updateChain(self):
         storeFile = self.getStoreFile()
