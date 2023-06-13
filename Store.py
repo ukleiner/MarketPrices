@@ -31,7 +31,18 @@ class Store:
         self._storeDetails(self.context)
 
 
-    def checkStoreExists(self):
+    def getStore(self):
+        '''
+            get internal store id, throws if no store
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                db store id
+            Side effects:
+                throws if store not set
+        '''
         con = self.db.getConn()
         cur = con.cursor()
         query = "SELECT id FROM store WHERE store = ?"
@@ -54,6 +65,17 @@ class Store:
         return([Item(self.chain, xmlItem) for xmlItem in xmlItems])
 
     def getPrices(self, items):
+        '''
+            Get list of item prices ready for insert in db
+            ---------------------
+            Parameters:
+                items - list of Item objects
+            Uses:
+            =====================
+            Return:
+                list of price (list of data ready for db insert)
+            Side effects:
+        '''
         con = self.db.getConn()
         cur = con.cursor()
         itemsObj = {item.code: item for item in items}
@@ -64,12 +86,23 @@ class Store:
 
         if len(missing_codes) > 0:
             missing_items = [itemsObj[code] for code in missing_codes]
-            self._createChainItems(missing_items)
+            self._insertChainItems(missing_items)
             ids_codes = self._getItemCodes(itemCodes)
         prices = [itemsObj[code].getPriceItem(iid) for iid, code in ids_codes]
         return(prices)
 
-    def logPrices(self, prices):
+    def insertPrices(self, prices):
+        '''
+            Insert prices to db
+            ---------------------
+            Parameters:
+                prices - list of price list
+            Uses:
+            =====================
+            Return:
+            Side effects:
+                update db
+        '''
         # prices should be with verified item internal id
         # No try except  for fast fail
         con = self.db.getConn()
@@ -103,7 +136,7 @@ class Store:
         self.storeId = int(context.find('StoreId').text)
         # TODO raise special error if store missing to tirgger store update
         try:
-            self.store = self.checkStoreExists()
+            self.store = self.getStore()
         except TypeError:
             raise NoStoreException
 
@@ -123,7 +156,18 @@ class Store:
         cur.execute(query, (self.chain, itemCodes)
         return cur.fetchall()
 
-    def _createChainItems(self, missing_codes, missing_items):
+    def _insertChainItems(self, items):
+        '''
+            Insert missing items to db
+            ---------------------
+            Parameters:
+                items - list of Item objects to insert
+            Uses:
+            =====================
+            Return:
+            Side effects:
+                update db
+        '''
         itemsList = [item.getChainItem(self.chain) for item in items]
         con = self.db.getConn()
         cur = con.cursor()
