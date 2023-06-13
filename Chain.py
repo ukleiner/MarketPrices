@@ -14,10 +14,11 @@ class Chain:
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, url, username, password, name, chainId):
+    def __init__(self, db, url, username, password, name, chainId, manu):
         self.db = db
         self.name = name
         self.chainId = chainId
+        self.targetManu = manu
         self.dirname = f"./data/{name}"
         self.url = url
         self.username = username
@@ -47,10 +48,10 @@ class Chain:
         downloaded = []
         continuePaging = True
         firstOfLast = None
+        updateDate = self._getLatestDate()
         while continuePaging:
             page = page + 1
             table = self.getInfoTable("FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}'")
-            updateDate = self._getLatestDate()
             links = []
             link = None
             priceFileName = None
@@ -117,7 +118,7 @@ class Chain:
         self.chain = self.getChain(self.chainId)
 
     def fileList(self):
-        updateDate = self.getLatestDate()
+        updateDate = self._getLatestDate()
         filenames = next(os.walk(self.dirname), (None, None, []))[2]
         if updateDate is None:
             priceFiles = [f for f in filenames if self.priceR.match(f)]
@@ -126,15 +127,22 @@ class Chain:
             return [file for key, file in matchPrice if key > updateDate]
 
     def scanStores(self):
-        repeat = True
-        files = self.fileList()
+        # TODO I'm here
+        # Check everything works with a single file name
+        # newFiles = self.download()
+        # files = self.fileList()
+        files = [f"{self.dirname}/PriceFull7290027600007-845-202306130300.gz"]
         for fn in files:
             try:
-                store = Store(self.db, fn, self.targetManu, self.chainId)
+                store = Store(self.db, fn, self.targetManu, self.chainId, self.chain)
                 items = store.obtainItems()
+                prices = store.getPrices(items)
+                store.logPrices(prices)
             except NoStoreException:
-                # TODO handle this
-                pass
+                # TODO store 235 doesn't exist
+                # TODO add logging
+                # TODO is there a way to detect the store is not in the store file?
+                print("NoStoreException")
 
     def getChain(self, chain):
         con = self.db.getConn()
