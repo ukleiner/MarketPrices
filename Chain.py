@@ -25,7 +25,7 @@ class Chain:
 
         self.priceR = re.compile('^PriceFull')
         self.storeR = re.compile('^Stores')
-        self.dateR = re.compile('-(\d{8})\d{4}\.xml')
+        self.dateR = re.compile('-(\d{8})\d{4}')
 
         try:
             self.setChain()
@@ -35,9 +35,49 @@ class Chain:
             self.updateChain()
 
     def download(self):
-        url =f'{self.url}/FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=ASC'
-        update_date = self._getLatestDate()
-        pass
+        url =f'http://{self.url}/FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=ASC'
+        updateDate = self._getLatestDate()
+        '''
+        r = requests.get(url)
+        res = r.text
+        with open('shufres.html', 'w') as f:
+            f.write(res)
+        '''
+        with open('shufres.html', 'r') as f:
+            res = f.read()
+        html = etree.HTML(res)
+        table = html.find("body/div/table/tbody")
+        links = []
+        link = None
+        priceFileName = None
+        skip = False
+        for elem in table.iter():
+            if elem.tag == "tr":
+                link = None
+                priceFileName = None
+                skip = False
+            elif skip:
+                continue
+            elif elem.tag == "td":
+                if elem.text is None:
+                    a_elem = elem.find('a')
+                    if a_elem is None:
+                        continue
+                    link = a_elem.get('href')
+                    link = "".join(link.split())
+                else:
+                    if self.priceR.search(elem.text):
+                        fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
+                        if fileDate <= updateDate:
+                            skip = True
+                            continue
+                        priceFileName = elem.text
+
+                if priceFileName is not None and link is not None:
+                    links.append({'link': link, 'name': priceFileName})
+                    skip = True
+        downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
+        print(downloaded_files)
 
     def getStoreFile(self):
         url =f'http://{self.url}/FileObject/UpdateCategory?catID=5'
@@ -58,12 +98,14 @@ class Chain:
                         storeFileName = elem.text
                 if storeFileName is not None and link is not None:
                     break
-        storeData = requests.get(link)
-        filename = f'{self.dirname}/{storeFileName}/gz'
-        with open(filename, 'wb') as f:
-            f.write(storeData.content)
-        return filename
+        return(self._download_gz(storeFileName, link))
 
+    def _download_gz(self, fn, link):
+        data = requests.get(link)
+        filename = f'{self.dirname}/{fn}.gz'
+        with open(filename, 'wb') as f:
+            f.write(data.content)
+        return filename
 
     def updateChain(self):
         storeFile = self.getStoreFile()
@@ -73,13 +115,13 @@ class Chain:
         self.chain = self.getChain(self.chainId)
 
     def fileList(self):
-        update_date = self.getLatestDate()
+        updateDate = self.getLatestDate()
         filenames = next(os.walk(self.dirname), (None, None, []))[2]
-        if update_date is None:
+        if updateDate is None:
             priceFiles = [f for f in filenames if self.priceR.match(f)]
         else:
             matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
-            return [file for key, file in matchPrice if key > update_date]
+            return [file for key, file in matchPrice if key > updateDate]
 
     def scanStores(self):
         repeat = True
@@ -235,9 +277,9 @@ class Chain:
         '''
         cur.execute(query, (self.chain,))
         try:
-            update_date, = cur.fetchone()
+            updateDate, = cur.fetchone()
             # TODO filter used files
         except TypeError:
-            update_date = None
-        return update_date
+            updateDate = self._todatetime("19700101")
+        return updateDate
 
