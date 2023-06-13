@@ -1,11 +1,16 @@
 class Item:
-    def __init__(self, chain, store, xmlObject):
+    def __init__(self, chain, xmlObject):
         self.chain = chain
-        self.store = store
         self._parse(xmlObject)
 
-    def _parse(self):
-        for elem in self.obj.iter():
+    def getChainItem(self):
+        return([self.chain, self.code, self.name, self.manu, self.units])
+
+    def getPriceItem(self, item):
+        return([item, self.update_data, self.price])
+
+    def _parse(self, obj):
+        for elem in obj.iter():
             if elem.tag == 'ItemCode':
                 self.code = elem.text
             elif elem.tag == 'ItemName':
@@ -18,4 +23,3 @@ class Item:
                 self.price = elem.text
             elif elem.tag == 'PriceUpdateDate':
                 self.update_date = elem.text
-
