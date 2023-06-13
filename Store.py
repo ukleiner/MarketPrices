@@ -70,7 +70,17 @@ class Store:
         return(prices)
 
     def logPrices(self, prices):
-        pass
+        # prices should be with verified item internal id
+        # No try except  for fast fail
+        con = self.db.getConn()
+        cur = con.cursor()
+        query = '''INSERT INTO
+        price (`item`,`update_date`,`price`)
+        VALUES(?,?,?)'''
+        cur.executemany(query, prices)
+        con.commit()
+        # TODO log number of prices inserted from store
+
 
 
     # ===========PRIVATE=========
