@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from lxml import etree
 import requests
 
-from CustomExceptions import WrongChainFileException, NoStoreException
+from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
 from Store import Store
 
 class Chain:
@@ -29,18 +29,16 @@ class Chain:
         self.dateR = re.compile('-(\d{8})\d{4}')
 
         try:
-            self.setChain()
+            self._setChain()
         except TypeError:
             # TODO alert the user in some way about this
             # so it can trigger obtainStores
             self.updateChain()
 
-    def run(self):
-        pass
-
     def download(self):
         '''
             Download new data files
+            Implemented by each Chain class separately
             ---------------------
             Parameters:
             Uses:
@@ -92,6 +90,58 @@ class Chain:
             firstofLast = links[0]['name']
         return(downloaded)
 
+
+    def fileList(self):
+        '''
+            Returns a list of price files with newer dates than the latest price in the db
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                list of filenames to scan
+            Side effects:
+        '''
+        updateDate = self._getLatestDate()
+        filenames = next(os.walk(self.dirname), (None, None, []))[2]
+        if updateDate is None:
+            priceFiles = [f for f in filenames if self.priceR.match(f)]
+        else:
+            matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
+            return [file for key, file in matchPrice if key > updateDate]
+
+    def scanStores(self):
+        '''
+            Main entry point
+            Scan prices files from stores and inserts prices to db
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+            Side effects:
+                updates db
+        '''
+        # TODO I'm here
+        # Check everything works with a single file name
+        # newFiles = self.download()
+        # files = self.fileList()
+        files = [f"{self.dirname}/PriceFull7290027600007-845-202306130300.gz"]
+        for fn in files:
+            try:
+                store = Store(self.db, fn, self.targetManu, self.chainId, self.chain)
+                items = store.obtainItems()
+                prices = store.getPrices(items)
+                store.logPrices(prices)
+            except NoStoreException:
+                # TODO log this event
+                try:
+                    self.updateChain()
+                except NoSuchStoreException:
+                    # TODO log this event
+                    # removed store, continue
+                    continue
+
     def getStoreFile(self):
         '''
             Get file with chain stores for updating
@@ -118,120 +168,10 @@ class Chain:
                         storeFileName = elem.text
                 if storeFileName is not None and link is not None:
                     break
+        if os.path.exists(f"{self.dirname}/{storeFileName}"):
+            raise NoSuchStoreException
+
         return(self._download_gz(storeFileName, link))
-
-    def updateChain(self):
-        '''
-            Updates chain's stores with new file
-            ---------------------
-            Parameters:
-            Uses:
-            =====================
-            Return:
-                Void
-            Side effects:
-                downloads file and updates db
-        '''
-        storeFile = self.getStoreFile()
-        self.obtainStores(storeFile)
-
-    def fileList(self):
-        '''
-            Returns a list of price files with newer dates than the latest price in the db
-            ---------------------
-            Parameters:
-            Uses:
-            =====================
-            Return:
-                list of filenames to scan
-            Side effects:
-        '''
-        updateDate = self._getLatestDate()
-        filenames = next(os.walk(self.dirname), (None, None, []))[2]
-        if updateDate is None:
-            priceFiles = [f for f in filenames if self.priceR.match(f)]
-        else:
-            matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
-            return [file for key, file in matchPrice if key > updateDate]
-
-    def scanStores(self):
-        '''
-            Scan prices files from stores and inserts prices to db
-            ---------------------
-            Parameters:
-            Uses:
-            =====================
-            Return:
-            Side effects:
-                updates db
-        '''
-        # TODO I'm here
-        # Check everything works with a single file name
-        # newFiles = self.download()
-        # files = self.fileList()
-        files = [f"{self.dirname}/PriceFull7290027600007-845-202306130300.gz"]
-        for fn in files:
-            try:
-                store = Store(self.db, fn, self.targetManu, self.chainId, self.chain)
-                items = store.obtainItems()
-                prices = store.getPrices(items)
-                store.logPrices(prices)
-            except NoStoreException:
-                # TODO store 235 doesn't exist
-                # TODO add logging
-                # TODO is there a way to detect the store is not in the store file?
-                print("NoStoreException")
-
-    def getChain(self, chain):
-        '''
-            get internal chain id, throws if no chain
-            ---------------------
-            Parameters:
-            Uses:
-            =====================
-            Return:
-                db chain id
-            Side effects:
-                throws if chain not set
-        '''
-        con = self.db.getConn()
-        cur = con.cursor()
-        query = "SELECT id FROM chain WHERE chainId = ?"
-        cur.execute(query, (chain,))
-        cid, = cur.fetchone()
-        return cid
-
-    def getSubchains(self, chain):
-        '''
-            Fetch subchains internal Id conversion from chain Id
-            ---------------------
-            Parameters:
-                chain - chain internal ID
-            =====================
-            Return:
-               dict of subchain (external) to subchain (internal)
-        '''
-        con = self.db.getConn()
-        cur = con.cursor()
-        query = "SELECT id,subchainId FROM subchain WHERE chain = ?"
-        cur.execute(query, (chain,))
-        return({sc.subchainId: sc.id for sc in cur.fetchall()})
-
-    def getStores(self, chain):
-        '''
-            Fetch storeinternal Id conversion from chain Id
-            ---------------------
-            Parameters:
-                chain - internal chain id
-            =====================
-             Return:
-            dict store (external) to store (internal)
-        '''
-        con = self.db.getConn()
-        cur = con.cursor()
-        query = "SELECT id, store FROM store WHERE chain = ?"
-        cur.execute(query, (chain,))
-        return({store.store: store.id for store in cur.fetchall()})
 
     def obtainStores(self, fn):
         '''
@@ -251,12 +191,12 @@ class Chain:
             # chainId in file should be like setup
             raise WrongChainFileException
         try:
-            chain = self.getChain(chainId)
+            chain = self._getChain(chainId)
         except AttributeError:
             chain = self._insertChain(chainId)
 
-        subchains = self.getSubchains(chain)
-        stores = self.getStores(chain)
+        subchains = self._getSubchains(chain)
+        stores = self._getStores(chain)
 
         storesElem = context.find('.//STORES')
         storesIns = {}
@@ -284,7 +224,72 @@ class Chain:
 
         self._insertStores(storesIns, storeLinks)
 
+    def updateChain(self):
+        '''
+            Updates chain's stores with new file
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                Void
+            Side effects:
+                downloads file and updates db
+        '''
+        storeFile = self.getStoreFile()
+        self.obtainStores(storeFile)
      # ========== PRIVATE ==========
+    def _getChain(self, chain):
+        '''
+            get internal chain id, throws if no chain
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                db chain id
+            Side effects:
+                throws if chain not set
+        '''
+        con = self.db.getConn()
+        cur = con.cursor()
+        query = "SELECT id FROM chain WHERE chainId = ?"
+        cur.execute(query, (chain,))
+        cid, = cur.fetchone()
+        return cid
+
+    def _getSubchains(self, chain):
+        '''
+            Fetch subchains internal Id conversion from chain Id
+            ---------------------
+            Parameters:
+                chain - chain internal ID
+            =====================
+            Return:
+               dict of subchain (external) to subchain (internal)
+        '''
+        con = self.db.getConn()
+        cur = con.cursor()
+        query = "SELECT id,subchainId FROM subchain WHERE chain = ?"
+        cur.execute(query, (chain,))
+        return({sc.subchainId: sc.id for sc in cur.fetchall()})
+
+    def _getStores(self, chain):
+        '''
+            Fetch storeinternal Id conversion from chain Id
+            ---------------------
+            Parameters:
+                chain - internal chain id
+            =====================
+             Return:
+            dict store (external) to store (internal)
+        '''
+        con = self.db.getConn()
+        cur = con.cursor()
+        query = "SELECT id, store FROM store WHERE chain = ?"
+        cur.execute(query, (chain,))
+        return({store.store: store.id for store in cur.fetchall()})
+
     def _getInfoTable(self, local_path):
         url =f'http://{self.url}/{local_path}'
         r = requests.get(url)
@@ -315,7 +320,7 @@ class Chain:
 
 
     def _setChain(self):
-        self.chain = self.getChain(self.chainId)
+        self.chain = self._getChain(self.chainId)
 
     def _insertChain(self, chain):
         '''
