@@ -19,6 +19,7 @@
 import tracemalloc
 import timeit
 
+from loguru import logger
 from Chain import Chain
 from Store import Store
 from DBConn import DB
@@ -88,10 +89,13 @@ def timing_tests(fn, targetManu, n=10):
     print(t1, t2)
 
 if __name__ == '__main__':
+    logger.add("./logs/scraping_{time}.log", rotation="03:00", compression="zip", enqueue=True, filter=lambda record: record["level"].no < 30, format="{time:YYYY-MM-DD HH:mm:ss.SSS}| {message}", level="INFO")
+    logger.add("./logs/crash.log", backtrace=True, diagnose=True, level="WARNING")
     dbc = DB()
     #dbc.dbStruct()
-    chain1 = Chain(dbc, None, None, None, "Shufersal", 7290027600007)
-    print(chain1.fileList())
+    chain1 = Chain(dbc, "prices.shufersal.co.il", None, None, "Shufersal", 7290027600007)
+    # print(chain1.fileList())
+    chain1.updateChain()
     #chain1.obtainStores(_storefn)
     # store1 = Store(dbc, _fn, _targetManu)
     # parsedItems = obtain_items(_fn, _targetManu)
