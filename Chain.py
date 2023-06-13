@@ -33,20 +33,17 @@ class Chain:
             # TODO alert the user in some way about this
             # so it can trigger obtainStores
             self.updateChain()
-
-    def download(self):
-        url =f'http://{self.url}/FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=ASC'
-        updateDate = self._getLatestDate()
-        '''
+    def getInfoTable(self, local_path):
+        url =f'http://{self.url}/{local_path}'
         r = requests.get(url)
         res = r.text
-        with open('shufres.html', 'w') as f:
-            f.write(res)
-        '''
-        with open('shufres.html', 'r') as f:
-            res = f.read()
         html = etree.HTML(res)
         table = html.find("body/div/table/tbody")
+        return(table)
+
+    def download(self):
+        table = self.getInfoTable("FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=ASC'")
+        updateDate = self._getLatestDate()
         links = []
         link = None
         priceFileName = None
@@ -77,17 +74,13 @@ class Chain:
                     links.append({'link': link, 'name': priceFileName})
                     skip = True
         downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
-        print(downloaded_files)
+        return(downloaded_files)
 
     def getStoreFile(self):
-        url =f'http://{self.url}/FileObject/UpdateCategory?catID=5'
+        table = self.getInfoTable("FileObject/UpdateCategory?catID=5")
 
-        r = requests.get(url)
-        html = r.text
-        table = etree.HTML(html).find("body/div/table/tbody")
         storeFileName = None
         link = None
-
         for elem in table.iter():
             if elem.tag == "td":
                 if elem.text is None:
