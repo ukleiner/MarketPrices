@@ -33,6 +33,7 @@ class Chain:
             # TODO alert the user in some way about this
             # so it can trigger obtainStores
             self.updateChain()
+
     def getInfoTable(self, local_path):
         url =f'http://{self.url}/{local_path}'
         r = requests.get(url)
@@ -42,39 +43,47 @@ class Chain:
         return(table)
 
     def download(self):
-        table = self.getInfoTable("FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=ASC'")
-        updateDate = self._getLatestDate()
-        links = []
-        link = None
-        priceFileName = None
-        skip = False
-        for elem in table.iter():
-            if elem.tag == "tr":
-                link = None
-                priceFileName = None
-                skip = False
-            elif skip:
-                continue
-            elif elem.tag == "td":
-                if elem.text is None:
-                    a_elem = elem.find('a')
-                    if a_elem is None:
-                        continue
-                    link = a_elem.get('href')
-                    link = "".join(link.split())
-                else:
-                    if self.priceR.search(elem.text):
-                        fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
-                        if fileDate <= updateDate:
-                            skip = True
+        page = 0
+        downloaded = []
+        continuePaging = True
+        firstOfLast = None
+        while continuePaging:
+            page = page + 1
+            table = self.getInfoTable("FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}'")
+            updateDate = self._getLatestDate()
+            links = []
+            link = None
+            priceFileName = None
+            skip = False
+            for elem in table.iter():
+                if elem.tag == "tr":
+                    link = None
+                    priceFileName = None
+                    skip = False
+                elif skip:
+                    continue
+                elif elem.tag == "td":
+                    if elem.text is None:
+                        a_elem = elem.find('a')
+                        if a_elem is None:
                             continue
-                        priceFileName = elem.text
+                        link = a_elem.get('href')
+                        link = "".join(link.split())
+                    else:
+                        if self.priceR.search(elem.text):
+                            fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
+                            if fileDate <= updateDate or firstOfLast == elem.text:
+                                continuePaging = False
+                                break
+                            priceFileName = elem.text
 
-                if priceFileName is not None and link is not None:
-                    links.append({'link': link, 'name': priceFileName})
-                    skip = True
-        downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
-        return(downloaded_files)
+                    if priceFileName is not None and link is not None:
+                        links.append({'link': link, 'name': priceFileName})
+                        skip = True
+            downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
+            downloaded = downloaded + downloaded_files
+            firstofLast = links[0]['name']
+        return(downloaded)
 
     def getStoreFile(self):
         table = self.getInfoTable("FileObject/UpdateCategory?catID=5")
