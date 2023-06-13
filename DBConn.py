@@ -97,7 +97,7 @@ class DB:
         item INTEGER NOT NULL,
         update_date DATETIME NOT NULL,
         price REAL,
-        FOREIGN KEY(item) REFERENCES item(id)
+        FOREIGN KEY(item) REFERENCES storeItem(id)
         )'''
         self.cur.execute(query)
 
