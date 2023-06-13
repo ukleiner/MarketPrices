@@ -21,7 +21,7 @@ class DB:
         self.createSubchains()
         self.createStores()
         self.linkSubChainStore()
-        self.createStoreItems()
+        self.createChainItems()
         self.createPrices()
         self.createItems()
         self.createItemLinker()
@@ -77,16 +77,16 @@ class DB:
         self.cur.execute(query)
 
 
-    def createStoreItems(self):
-        query = '''CREATE TABLE IF NOT EXISTS storeItem (
+    def createChainItems(self):
+        query = '''CREATE TABLE IF NOT EXISTS chainItem (
         id INTEGER PRIMARY KEY,
         Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        store INTEGER NOT NULL,
+        chain INTEGER NOT NULL,
         code INTEGER NOT NULL,
         name TEXT NOT NULL,
         manufacturer TEXT NOT NULL,
         units TEXT,
-        FOREIGN KEY(store) REFERENCES store(id)
+        FOREIGN KEY(chain) REFERENCES chain(id)
         )'''
         self.cur.execute(query)
 
@@ -94,9 +94,11 @@ class DB:
         query = '''CREATE TABLE IF NOT EXISTS price (
         id INTEGER PRIMARY KEY,
         Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        store INTEGER NOT NULL,
         item INTEGER NOT NULL,
         update_date DATETIME NOT NULL,
         price REAL,
+        FOREIGN KEY(store) REFERENCES store(id)
         FOREIGN KEY(item) REFERENCES storeItem(id)
         )'''
         self.cur.execute(query)
@@ -113,9 +115,9 @@ class DB:
         query = '''CREATE TABLE IF NOT EXISTS item_link(
         id INTEGER PRIMARY KEY,
         item INTEGER NOT NULL,
-        storeItem INTEGER NOT NULL,
+        chainItem INTEGER NOT NULL,
         FOREIGN KEY(item) REFERENCES item(id)
-        FOREIGN KEY(storeItem) REFERENCES storeItem(id)
+        FOREIGN KEY(chainItem) REFERENCES chainItem(id)
         )'''
         self.cur.execute(query)
 
