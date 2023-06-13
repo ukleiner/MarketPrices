@@ -35,15 +35,21 @@ class Chain:
             # so it can trigger obtainStores
             self.updateChain()
 
-    def getInfoTable(self, local_path):
-        url =f'http://{self.url}/{local_path}'
-        r = requests.get(url)
-        res = r.text
-        html = etree.HTML(res)
-        table = html.find("body/div/table/tbody")
-        return(table)
+    def run(self):
+        pass
 
     def download(self):
+        '''
+            Download new data files
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                downloaded - files downloaded
+            Side effects:
+                downloads files to dirname
+        '''
         page = 0
         downloaded = []
         continuePaging = True
@@ -51,7 +57,7 @@ class Chain:
         updateDate = self._getLatestDate()
         while continuePaging:
             page = page + 1
-            table = self.getInfoTable("FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}'")
+            table = self._getInfoTable("FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}'")
             links = []
             link = None
             priceFileName = None
@@ -87,7 +93,18 @@ class Chain:
         return(downloaded)
 
     def getStoreFile(self):
-        table = self.getInfoTable("FileObject/UpdateCategory?catID=5")
+        '''
+            Get file with chain stores for updating
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                location of stored file
+            Side effects:
+                Download file with stores data
+        '''
+        table = self._getInfoTable("FileObject/UpdateCategory?catID=5")
 
         storeFileName = None
         link = None
@@ -103,21 +120,32 @@ class Chain:
                     break
         return(self._download_gz(storeFileName, link))
 
-    def _download_gz(self, fn, link):
-        data = requests.get(link)
-        filename = f'{self.dirname}/{fn}.gz'
-        with open(filename, 'wb') as f:
-            f.write(data.content)
-        return filename
-
     def updateChain(self):
+        '''
+            Updates chain's stores with new file
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                Void
+            Side effects:
+                downloads file and updates db
+        '''
         storeFile = self.getStoreFile()
         self.obtainStores(storeFile)
 
-    def setChain(self):
-        self.chain = self.getChain(self.chainId)
-
     def fileList(self):
+        '''
+            Returns a list of price files with newer dates than the latest price in the db
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                list of filenames to scan
+            Side effects:
+        '''
         updateDate = self._getLatestDate()
         filenames = next(os.walk(self.dirname), (None, None, []))[2]
         if updateDate is None:
@@ -127,6 +155,16 @@ class Chain:
             return [file for key, file in matchPrice if key > updateDate]
 
     def scanStores(self):
+        '''
+            Scan prices files from stores and inserts prices to db
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+            Side effects:
+                updates db
+        '''
         # TODO I'm here
         # Check everything works with a single file name
         # newFiles = self.download()
@@ -145,6 +183,17 @@ class Chain:
                 print("NoStoreException")
 
     def getChain(self, chain):
+        '''
+            get internal chain id, throws if no chain
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                db chain id
+            Side effects:
+                throws if chain not set
+        '''
         con = self.db.getConn()
         cur = con.cursor()
         query = "SELECT id FROM chain WHERE chainId = ?"
@@ -204,7 +253,7 @@ class Chain:
         try:
             chain = self.getChain(chainId)
         except AttributeError:
-            chain = self.insertChain(chainId)
+            chain = self._insertChain(chainId)
 
         subchains = self.getSubchains(chain)
         stores = self.getStores(chain)
@@ -223,7 +272,7 @@ class Chain:
             subchainId = store.find('SUBCHAINID').text
             if subchainId not in subchains:
                 scname = store.find('SUBCHAINNAME').text
-                subchain = self.createSubchain(chain, subchainId, scname)
+                subchain = self._insertSubchain(chain, subchainId, scname)
                 subchains[subchainId] = subchain
 
             subchain = subchains[subchainId]
@@ -233,9 +282,53 @@ class Chain:
             storesIns[storeId] = [chain, storeId, storeName, city]
             storeLinks[storeId] = subchain
 
-        self.createStores(storesIns, storeLinks)
+        self._insertStores(storesIns, storeLinks)
 
-    def insertChain(self, chain):
+     # ========== PRIVATE ==========
+    def _getInfoTable(self, local_path):
+        url =f'http://{self.url}/{local_path}'
+        r = requests.get(url)
+        res = r.text
+        html = etree.HTML(res)
+        table = html.find("body/div/table/tbody")
+        return(table)
+
+    def _download_gz(self, fn, link):
+        '''
+            Download a gzip file
+            ---------------------
+            Parameters:
+               fn - name to save
+               link - where to download from
+            Uses:
+            =====================
+            Return:
+                path to file
+            Side effects:
+                downloads file
+        '''
+        data = requests.get(link)
+        filename = f'{self.dirname}/{fn}.gz'
+        with open(filename, 'wb') as f:
+            f.write(data.content)
+        return filename
+
+
+    def _setChain(self):
+        self.chain = self.getChain(self.chainId)
+
+    def _insertChain(self, chain):
+        '''
+            Inserts the chain to the db
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                new chain internal id
+            Side effects:
+                updates db
+        '''
         con = self.db.getConn()
         cur = con.cursor()
         query = "INSERT INTO chain (`chainId`, `chainName`) VALUES(?, ?)"
@@ -243,7 +336,18 @@ class Chain:
         con.commit()
         return cur.lastrowid
 
-    def createSubchain(self, chain, subchain, name):
+    def _insertSubchain(self, chain, subchain, name):
+        '''
+            Inserts subchain to db
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                subchain internal id
+            Side effects:
+                updates db
+        '''
         con = self.db.getConn()
         cur = con.cursor()
         query = "INSERT INTO subchain (`chain`, `subchainId`, `name`) VALUES(?,?,?)"
@@ -251,24 +355,6 @@ class Chain:
         con.commit()
         return cur.lastrowid
 
-    def createStores(self, stores, storeLinks):
-        con = self.db.getConn()
-        cur = con.cursor()
-        storeQuery = "INSERT INTO store (`chain`, `store`, `name`, `city`) VALUES(?,?,?,?)"
-        cur.executemany(storeQuery, stores.values())
-        con.commit()
-
-        newStoresQ = f"SELECT id, store FROM store WHERE store IN ({','.join(['?']*len(stores))})"
-        cur.execute(newStoresQ, list(stores.keys()))
-        storeIds = { store: sid for sid, store in cur.fetchall() }
-        realLinks = [[subchain, storeIds[store]] for store, subchain in storeLinks.items()]
-
-        linkQ = "INSERT INTO store_link (`subchain`,`store`) VALUES(?,?)"
-        cur.executemany(linkQ, realLinks)
-        con.commit()
-
-
-     # ========== PRIVATE ==========
     def _todatetime(self, date):
         return datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]))
 
@@ -292,4 +378,32 @@ class Chain:
         except TypeError:
             updateDate = self._todatetime("19700101")
         return updateDate
+
+    def _insertStores(self, stores, storeLinks):
+        '''
+            Inserts stores to db
+            ---------------------
+            Parameters:
+            Uses:
+            =====================
+            Return:
+                None
+            Side effects:
+                updates db
+        '''
+        con = self.db.getConn()
+        cur = con.cursor()
+        storeQuery = "INSERT INTO store (`chain`, `store`, `name`, `city`) VALUES(?,?,?,?)"
+        cur.executemany(storeQuery, stores.values())
+        con.commit()
+
+        newStoresQ = f"SELECT id, store FROM store WHERE store IN ({','.join(['?']*len(stores))})"
+        cur.execute(newStoresQ, list(stores.keys()))
+        storeIds = { store: sid for sid, store in cur.fetchall() }
+        realLinks = [[subchain, storeIds[store]] for store, subchain in storeLinks.items()]
+
+        linkQ = "INSERT INTO store_link (`subchain`,`store`) VALUES(?,?)"
+        cur.executemany(linkQ, realLinks)
+        con.commit()
+
 
