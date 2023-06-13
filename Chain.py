@@ -1,9 +1,10 @@
 import os
 import re
 import datetime
+import gzip
 import xml.etree.ElementTree as ET
-from lxml import etree
 
+from lxml import etree
 import requests
 
 from CustomExceptions import WrongChainFileException, NoStoreException
@@ -40,10 +41,8 @@ class Chain:
 
     def getStoreFile(self):
         url =f'http://{self.url}/FileObject/UpdateCategory?catID=5'
+
         r = requests.get(url)
-        # print(r.text)
-        # with open("./shufresp.txt", "r") as f:
-            # html = f.read()
         html = r.text
         table = etree.HTML(html).find("body/div/table/tbody")
         storeFileName = None
@@ -60,8 +59,10 @@ class Chain:
                 if storeFileName is not None and link is not None:
                     break
         storeData = requests.get(link)
-        with open(f'{self.dirname}/{storeFileName}.gz', 'wb') as f:
+        filename = f'{self.dirname}/{storeFileName}/gz'
+        with open(filename, 'wb') as f:
             f.write(storeData.content)
+        return filename
 
 
     def updateChain(self):
@@ -141,8 +142,9 @@ class Chain:
             Return:
                 list of Item objects
         '''
-        context = ET.parse(fn)
-        c = 0
+        with gzip.open(fn, 'rt') as f:
+            data = f.read()
+            context = ET.parse(data)
         chainId = int(context.find('.//CHAINID').text)
         if chainId != self.chain:
             # chainId in file should be like setup
