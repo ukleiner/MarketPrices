@@ -2,18 +2,11 @@ import sqlite3
 
 class DB:
     def __init__(self):
+        self.version = 1
         self.con = sqlite3.connect('agriItems.db')
 
     def getConn(self):
         return self.con
-
-    def logPrice(self, chain, store, items):
-        query = '''INSERT INTO price (`item`, `update_date`, `price`)
-        VALUES(?)'''
-        cur = con.cursor()
-        cur.executemany(query, [(token,) for token in tokens])
-        con.commit()
-        cur.close()
 
     def dbStruct(self):
         self.cur = self.con.cursor()
@@ -26,6 +19,7 @@ class DB:
         self.createItems()
         self.createItemLinker()
         self.con.commit()
+        self.logger(f"Created db version {self.version}")
 
     def createChains(self):
         query = '''CREATE TABLE IF NOT EXISTS chain (
