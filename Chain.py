@@ -29,7 +29,7 @@ class Chain:
         self.storeR = re.compile('^Stores')
         self.dateR = re.compile('-(\d{8})\d{4}')
 
-        self._log("Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
+        self._log(f"Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
 
         try:
             self._setChain()
@@ -196,7 +196,7 @@ class Chain:
         self._log(f"Obtaining stores from {fn}")
         with gzip.open(fn, 'rt') as f:
             data = f.read()
-            context = ET.parse(data)
+            context = ET.fromstring(data)
         chainId = int(context.find('.//CHAINID').text)
         if chainId != self.chain:
             # chainId in file should be like setup
