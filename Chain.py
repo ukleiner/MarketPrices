@@ -92,9 +92,9 @@ class Chain:
                         links.append({'link': link, 'name': priceFileName})
                         logger.info(f"Found price file {priceFileName}")
                         skip = True
+            firstofLast = links[0]['name']
             downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
             downloaded = downloaded + downloaded_files
-            firstofLast = links[0]['name']
         return(downloaded)
 
 
@@ -388,9 +388,8 @@ class Chain:
         FROM price
         INNER JOIN item on price.item = item.id
         INNER JOIN item_link on item.id = item_link.item
-        INNER JOIN storeItem ON item_link.storeItem = storeItem.id
-        INNER JOIN store ON storeItem.store = store.id
-        WHERE store.chain = ?
+        INNER JOIN chainItem ON item_link.chainItem = chainItem.id
+        WHERE chainItem.chain = ?
         ORDER BY price.update_date DESC
         LIMIT 1
         '''
