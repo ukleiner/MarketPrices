@@ -88,12 +88,18 @@ def timing_tests(fn, targetManu, n=10):
     t2 = timeit.timeit(lambda: obtain_items(fn, targetManu), number=n)
     print(t1, t2)
 
-if __name__ == '__main__':
-    # TODO add logging
-    # logger.add("./logs/scraping_{time}.log", rotation="03:00", compression="zip", enqueue=True, filter=lambda record: record["level"].no < 30, format="{time:YYYY-MM-DD HH:mm:ss.SSS}| {message}", level="INFO")
-    # logger.add("./logs/crash.log", backtrace=True, diagnose=True, level="WARNING")
+@logger.catch
+def main():
     dbc = DB()
     dbc.dbStruct()
     chain1 = Chain(dbc, "prices.shufersal.co.il", None, None, "Shufersal", 7290027600007, "קטיף.")
 
     item = chain1.scanStores()
+
+if __name__ == '__main__':
+    # TODO add logging
+    logger.add("./logs/scanning_{time}.log", rotation="03:00", compression="zip", enqueue=True, filter=lambda record: record["level"].no < 30, format="{time:YYYY-MM-DD HH:mm:ss.SSS}| {message}", level="INFO")
+    logger.add("./logs/crash.log", backtrace=True, diagnose=True, level="WARNING")
+    logger.info("Starting")
+    main()
+    logger.info("stopped")
