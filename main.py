@@ -18,8 +18,11 @@
 
 import tracemalloc
 import timeit
+import time
+import datetime
 
 from loguru import logger
+
 from Chain import Chain
 from Store import Store
 from DBConn import DB
@@ -92,9 +95,27 @@ def timing_tests(fn, targetManu, n=10):
 def main():
     dbc = DB()
     dbc.dbStruct()
-    chain1 = Chain(dbc, "prices.shufersal.co.il", None, None, "Shufersal", 7290027600007, "קטיף.")
+    init_chains()
+    # TODO Parallel this
+    while True:
+        start = datetime.date.today()
+        logger.info(f"Scanning for day {start}")
+        nextDay = start + datetime.timedelta(1)
+        targetTime = datetime.datetime(nextDay.year, nextDay.month, nextDay.day, 4)
+        for chain in chains:
+            chain.scanStores()
+        if datetime.datetime.now() < targetTime:
+            pass
+        else:
+            diff = int(targetTime - datetime.datetime.now())
+            logger.info(f"Sleeping for {diff} seconds up to the next store update")
+            time.sleep(diff)
 
-    item = chain1.scanStores()
+def init_chains():
+    chains = []
+    shufersal = Chain(dbc, "prices.shufersal.co.il", None, None, "Shufersal", 7290027600007, "קטיף.")
+    chains.append(shufersal)
+    return chains
 
 if __name__ == '__main__':
     # TODO add logging
