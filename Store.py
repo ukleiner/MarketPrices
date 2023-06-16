@@ -153,7 +153,7 @@ class Store:
                 sets the store values in the object
         '''
         query = f"SELECT id, code FROM chainItem WHERE chain = ? AND code IN ({','.join(['?']*len(itemCodes))})"
-        cur.execute(query, (self.chain, itemCodes)
+        cur.execute(query, (self.chain, itemCodes))
         return cur.fetchall()
 
     def _insertChainItems(self, items):
