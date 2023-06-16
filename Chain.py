@@ -55,7 +55,7 @@ class Chain:
         page = 0
         downloaded = []
         continuePaging = True
-        firstOfLast = None
+        firstOfLast = None # TODO this stop isn't working!
         updateDate = self._getLatestDate()
         self._log(f"looking at date after {updateDate}")
         while continuePaging:
