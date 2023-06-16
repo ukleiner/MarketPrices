@@ -19,6 +19,7 @@ class Chain:
         self.db = db
         self.name = name
         self.chainId = chainId
+        self.chain = None
         self.targetManu = manu
         self.dirname = f"./data/{name}"
         self.url = url
@@ -198,13 +199,13 @@ class Chain:
             data = f.read()
             context = ET.fromstring(data)
         chainId = int(context.find('.//CHAINID').text)
-        if chainId != self.chain:
+        if self.chain is not None and chainId != self.chain:
             # chainId in file should be like setup
             logger.error(f"Chain {self.chainId}: file with wrong chain Id supplied {fn}")
             raise WrongChainFileException
         try:
             chain = self._getChain(chainId)
-        except AttributeError:
+        except TypeError:
             chain = self._insertChain(chainId)
 
         subchains = self._getSubchains(chain)
