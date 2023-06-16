@@ -4,8 +4,9 @@ import datetime
 import gzip
 import xml.etree.ElementTree as ET
 
-from lxml import etree
 import requests
+from lxml import etree
+from loguru import logger
 
 from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
 from Store import Store
@@ -27,6 +28,8 @@ class Chain:
         self.priceR = re.compile('^PriceFull')
         self.storeR = re.compile('^Stores')
         self.dateR = re.compile('-(\d{8})\d{4}')
+
+        self._log("Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
 
         try:
             self._setChain()
@@ -53,9 +56,10 @@ class Chain:
         continuePaging = True
         firstOfLast = None
         updateDate = self._getLatestDate()
+        self._log(f"looking at date after {updateDate}")
         while continuePaging:
             page = page + 1
-            table = self._getInfoTable("FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}'")
+            table = self._getInfoTable(f"FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}")
             links = []
             link = None
             priceFileName = None
@@ -79,11 +83,13 @@ class Chain:
                             fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
                             if fileDate <= updateDate or firstOfLast == elem.text:
                                 continuePaging = False
+                                self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
                                 break
                             priceFileName = elem.text
 
                     if priceFileName is not None and link is not None:
                         links.append({'link': link, 'name': priceFileName})
+                        logger.info(f"Found price file {priceFileName}")
                         skip = True
             downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
             downloaded = downloaded + downloaded_files
@@ -106,9 +112,13 @@ class Chain:
         filenames = next(os.walk(self.dirname), (None, None, []))[2]
         if updateDate is None:
             priceFiles = [f for f in filenames if self.priceR.match(f)]
+            self._log("No last update time, using all files in folder")
         else:
             matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
-            return [file for key, file in matchPrice if key > updateDate]
+            priceFiles = [file for key, file in matchPrice if key > updateDate]
+            self._log(f"last update date {updateDate}, fetching files after that date")
+        self._log(f"Fetching {len(priceFiles)} files")
+        return priceFiles
 
     def scanStores(self):
         '''
@@ -122,25 +132,25 @@ class Chain:
             Side effects:
                 updates db
         '''
-        # TODO I'm here
-        # Check everything works with a single file name
-        # newFiles = self.download()
-        # files = self.fileList()
-        files = [f"{self.dirname}/PriceFull7290027600007-845-202306130300.gz"]
+        newFiles = self.download()
+        files = self.fileList()
         for fn in files:
             try:
                 store = Store(self.db, fn, self.targetManu, self.chainId, self.chain)
+            except NoStoreException:
+                self._log(f"Missing store from file {fn}")
+                try:
+                    self.updateChain()
+                    # store that was missing hasn't initiated, recap
+                    store = Store(self.db, fn, self.targetManu, self.chainId, self.chain)
+                except NoSuchStoreException:
+                    self._log(f"Store in file {fn} missing from latest stores file")
+                    # removed store, continue
+                    continue
+            finally:
                 items = store.obtainItems()
                 prices = store.getPrices(items)
                 store.logPrices(prices)
-            except NoStoreException:
-                # TODO log this event
-                try:
-                    self.updateChain()
-                except NoSuchStoreException:
-                    # TODO log this event
-                    # removed store, continue
-                    continue
 
     def getStoreFile(self):
         '''
@@ -183,12 +193,14 @@ class Chain:
             Return:
                 list of Item objects
         '''
+        self._log(f"Obtaining stores from {fn}")
         with gzip.open(fn, 'rt') as f:
             data = f.read()
             context = ET.parse(data)
         chainId = int(context.find('.//CHAINID').text)
         if chainId != self.chain:
             # chainId in file should be like setup
+            logger.error(f"Chain {self.chainId}: file with wrong chain Id supplied {fn}")
             raise WrongChainFileException
         try:
             chain = self._getChain(chainId)
@@ -292,6 +304,7 @@ class Chain:
 
     def _getInfoTable(self, local_path):
         url =f'http://{self.url}/{local_path}'
+        self._log(f"searching for table {url}")
         r = requests.get(url)
         res = r.text
         html = etree.HTML(res)
@@ -312,10 +325,12 @@ class Chain:
             Side effects:
                 downloads file
         '''
+        self._log(f"Downloading file {link}")
         data = requests.get(link)
         filename = f'{self.dirname}/{fn}.gz'
         with open(filename, 'wb') as f:
             f.write(data.content)
+            self._log(f"Saved to {filename}")
         return filename
 
 
@@ -339,6 +354,7 @@ class Chain:
         query = "INSERT INTO chain (`chainId`, `chainName`) VALUES(?, ?)"
         cur.execute(query, (chain, self.name))
         con.commit()
+        self._log(f"Created new chain in db, {cur.lastrowid}")
         return cur.lastrowid
 
     def _insertSubchain(self, chain, subchain, name):
@@ -358,6 +374,7 @@ class Chain:
         query = "INSERT INTO subchain (`chain`, `subchainId`, `name`) VALUES(?,?,?)"
         cur.execute(query, (chain, subchain, name))
         con.commit()
+        self._log(f"Created new subchain in db, {cur.lastrowid}")
         return cur.lastrowid
 
     def _todatetime(self, date):
@@ -401,6 +418,7 @@ class Chain:
         storeQuery = "INSERT INTO store (`chain`, `store`, `name`, `city`) VALUES(?,?,?,?)"
         cur.executemany(storeQuery, stores.values())
         con.commit()
+        self._log(f"Logged {cur.rowcount} new stores")
 
         newStoresQ = f"SELECT id, store FROM store WHERE store IN ({','.join(['?']*len(stores))})"
         cur.execute(newStoresQ, list(stores.keys()))
@@ -410,5 +428,8 @@ class Chain:
         linkQ = "INSERT INTO store_link (`subchain`,`store`) VALUES(?,?)"
         cur.executemany(linkQ, realLinks)
         con.commit()
+
+    def _log(self, mes):
+        logger.info(f"Chain {self.chainId}: {mes}")
 
 
