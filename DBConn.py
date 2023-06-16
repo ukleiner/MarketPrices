@@ -1,5 +1,7 @@
 import sqlite3
 
+from loguru import logger
+
 class DB:
     def __init__(self):
         self.version = 1
@@ -19,7 +21,7 @@ class DB:
         self.createItems()
         self.createItemLinker()
         self.con.commit()
-        self.logger(f"Created db version {self.version}")
+        logger.info(f"Created db version {self.version}")
 
     def createChains(self):
         query = '''CREATE TABLE IF NOT EXISTS chain (
@@ -93,7 +95,7 @@ class DB:
         update_date DATETIME NOT NULL,
         price REAL,
         FOREIGN KEY(store) REFERENCES store(id)
-        FOREIGN KEY(item) REFERENCES storeItem(id)
+        FOREIGN KEY(item) REFERENCES chainItem(id)
         )'''
         self.cur.execute(query)
 
