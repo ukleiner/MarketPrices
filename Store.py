@@ -1,6 +1,8 @@
 import gzip
 import xml.etree.ElementTree as ET
 
+from loguru import logger
+
 from CustomExceptions import WrongChainFileException, NoStoreException
 from Item import Item
 
@@ -24,11 +26,13 @@ class Store:
         self.manu = targetManu
         self.chainId = chainId
         self.chain = chain
+        logger.info(f"Start store for chain {self.chainId} using file {self.fn}")
 
         with gzip.open(fn, 'rt') as f:
             data = f.read()
             self.context = ET.fromstring(data)
         self._storeDetails(self.context)
+        logger.info(f"Store {self.storeId}/{self.subchain}/{self.chainId}")
 
 
     def getStore(self):
@@ -60,6 +64,7 @@ class Store:
                 list of Item objects
             Side effects:
         '''
+        logger.info(f"Obtaining items for store {self.storeId}@{self.chainId} from manufactuer {self.manu}")
         search_path = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
         xmlItems = self.context.findall(search_path)
         return([Item(self.chain, xmlItem) for xmlItem in xmlItems])
@@ -79,6 +84,7 @@ class Store:
         con = self.db.getConn()
         cur = con.cursor()
         itemsObj = {item.code: item for item in items}
+        logger.info(f"got {len(itemsObj)} items from {self.storeId}@{self.chainId}")
         itemCodes = list(itemsObj.keys())
         ids_codes = self._getItemIds(itemCodes)
         ids, codes = zip(*ids_codes)
@@ -112,7 +118,8 @@ class Store:
         VALUES(?,?,?)'''
         cur.executemany(query, prices)
         con.commit()
-        # TODO log number of prices inserted from store
+        insPrices = cur.rowcount
+        logger.info(f"Logged {insPrices} item prices for store {self.storeId}@{self.chainId}")
 
 
 
@@ -178,3 +185,4 @@ class Store:
         '''
         cur.executemany(query, itemsList)
         con.commit()
+        logger.info(f"Inserted {cur.rowcount} store items for {self.storeId}@{self.chainId}")
