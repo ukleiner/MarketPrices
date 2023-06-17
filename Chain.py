@@ -60,11 +60,11 @@ class Chain:
         self._log(f"looking at date after {updateDate}")
         while continuePaging:
             page = page + 1
-            links, continuePaging = self.download_page(page, firstOfLast)
+            links, continuePaging = self.download_page(page, updateDate, firstOfLast)
             if len(links) == 0:
                 firstOfLast = None
             else:
-                firstOfLast = firstLink['name']
+                firstOfLast = links[0]['name']
             downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
             downloaded = downloaded + downloaded_files
         return(downloaded)
@@ -94,7 +94,6 @@ class Chain:
                     link = "".join(link.split())
                 else:
                     if self.priceR.search(elem.text):
-                        print(elem.tag, elem.text, firstOfLast)
                         fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
                         if fileDate <= updateDate or firstOfLast == elem.text:
                             continuePaging = False
@@ -144,19 +143,20 @@ class Chain:
             Side effects:
                 updates db
         '''
-        newFiles = self.download()
+        # newFiles = self.download()
         files = self.fileList()
         for fn in files:
+            storeFile = f"{self.dirname}/{fn}"
             try:
-                store = Store(self.db, fn, self.targetManu, self.chainId, self.chain)
+                store = Store(self.db, storeFile, self.targetManu, self.chainId, self.chain)
             except NoStoreException:
-                self._log(f"Missing store from file {fn}")
+                self._log(f"Missing store from file {storeFile}")
                 try:
                     self.updateChain()
                     # store that was missing hasn't initiated, recap
-                    store = Store(self.db, fn, self.targetManu, self.chainId, self.chain)
+                    store = Store(self.db, storeFile, self.targetManu, self.chainId, self.chain)
                 except NoSuchStoreException:
-                    self._log(f"Store in file {fn} missing from latest stores file")
+                    self._log(f"Store in file {storeFile} missing from latest stores file")
                     # removed store, continue
                     continue
             finally:
@@ -409,7 +409,7 @@ class Chain:
             updateDate, = cur.fetchone()
             # TODO filter used files
         except TypeError:
-            updateDate = self._todatetime("20230618")
+            updateDate = self._todatetime("19700101")
         return updateDate
 
     def _insertStores(self, stores, storeLinks):
