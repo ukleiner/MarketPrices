@@ -55,47 +55,55 @@ class Chain:
         page = 0
         downloaded = []
         continuePaging = True
-        firstOfLast = None # TODO this stop isn't working!
+        firstOfLast = None
         updateDate = self._getLatestDate()
         self._log(f"looking at date after {updateDate}")
         while continuePaging:
             page = page + 1
-            table = self._getInfoTable(f"FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}")
-            links = []
-            link = None
-            priceFileName = None
-            skip = False
-            for elem in table.iter():
-                if elem.tag == "tr":
-                    link = None
-                    priceFileName = None
-                    skip = False
-                elif skip:
-                    continue
-                elif elem.tag == "td":
-                    if elem.text is None:
-                        a_elem = elem.find('a')
-                        if a_elem is None:
-                            continue
-                        link = a_elem.get('href')
-                        link = "".join(link.split())
-                    else:
-                        if self.priceR.search(elem.text):
-                            fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
-                            if fileDate <= updateDate or firstOfLast == elem.text:
-                                continuePaging = False
-                                self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
-                                break
-                            priceFileName = elem.text
-
-                    if priceFileName is not None and link is not None:
-                        links.append({'link': link, 'name': priceFileName})
-                        logger.info(f"Found price file {priceFileName}")
-                        skip = True
+            links, continuePaging = self.download_page(page, firstOfLast)
             firstofLast = links[0]['name']
             downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
             downloaded = downloaded + downloaded_files
         return(downloaded)
+
+    def download_page(self, page, updateDate=None, firstOfLast=None):
+        continuePaging=True
+        if updateDate is None:
+            updateDate = self._getLatestDate()
+        table = self._getInfoTable(f"FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}")
+        links = []
+        link = None
+        priceFileName = None
+        skip = False
+        for elem in table.iter():
+            if elem.tag == "tr":
+                link = None
+                priceFileName = None
+                skip = False
+            elif skip:
+                continue
+            elif elem.tag == "td":
+                if elem.text is None:
+                    a_elem = elem.find('a')
+                    if a_elem is None:
+                        continue
+                    link = a_elem.get('href')
+                    link = "".join(link.split())
+                else:
+                    if self.priceR.search(elem.text):
+                        print(elem.tag, elem.text, firstOfLast)
+                        fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
+                        if fileDate <= updateDate or firstOfLast == elem.text:
+                            continuePaging = False
+                            self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
+                            break
+                        priceFileName = elem.text
+
+                if priceFileName is not None and link is not None:
+                    links.append({'link': link, 'name': priceFileName})
+                    logger.info(f"Found price file {priceFileName}")
+                    skip = True
+        return links, continuePaging
 
 
     def fileList(self):
