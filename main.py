@@ -95,7 +95,7 @@ def timing_tests(fn, targetManu, n=10):
 def main():
     dbc = DB()
     dbc.dbStruct()
-    init_chains()
+    chains = init_chains(dbc)
     # TODO Parallel this
     while True:
         start = datetime.date.today()
@@ -104,16 +104,16 @@ def main():
         targetTime = datetime.datetime(nextDay.year, nextDay.month, nextDay.day, 4)
         for chain in chains:
             chain.scanStores()
-        if datetime.datetime.now() < targetTime:
+        if datetime.datetime.now() > targetTime:
             pass
         else:
-            diff = int(targetTime - datetime.datetime.now())
+            diff = int((targetTime - datetime.datetime.now()).total_seconds())
             logger.info(f"Sleeping for {diff} seconds up to the next store update")
             time.sleep(diff)
 
-def init_chains():
+def init_chains(db):
     chains = []
-    shufersal = Chain(dbc, "prices.shufersal.co.il", None, None, "Shufersal", 7290027600007, "קטיף.")
+    shufersal = Chain(db, "prices.shufersal.co.il", None, None, "Shufersal", 7290027600007, "קטיף.")
     chains.append(shufersal)
     return chains
 
