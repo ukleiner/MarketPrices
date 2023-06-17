@@ -145,7 +145,7 @@ class Chain:
             Side effects:
                 updates db
         '''
-        newFiles = self.download()
+        # newFiles = self.download()
         files = self.fileList()
         for fn in files:
             storeFile = f"{self.dirname}/{fn}"
@@ -220,12 +220,12 @@ class Chain:
             logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
             raise WrongChainFileException
         try:
-            chain = self._getChain(chainId)
+            self.chain = self._getChain(chainId)
         except TypeError:
-            chain = self._insertChain(chainId)
+            self.chain = self._insertChain(chainId)
 
-        subchains = self._getSubchains(chain)
-        stores = self._getStores(chain)
+        subchains = self._getSubchains(self.chain)
+        stores = self._getStores(self.chain)
 
         storesElem = context.find('.//STORES')
         storesIns = {}
@@ -241,14 +241,14 @@ class Chain:
             subchainId = store.find('SUBCHAINID').text
             if subchainId not in subchains:
                 scname = store.find('SUBCHAINNAME').text
-                subchain = self._insertSubchain(chain, subchainId, scname)
+                subchain = self._insertSubchain(self.chain, subchainId, scname)
                 subchains[subchainId] = subchain
 
             subchain = subchains[subchainId]
             storeName = store.find("STORENAME").text
             city = store.find("CITY").text
 
-            storesIns[storeId] = [chain, storeId, storeName, city]
+            storesIns[storeId] = [self.chain, storeId, storeName, city]
             storeLinks[storeId] = subchain
 
         self._insertStores(storesIns, storeLinks)
@@ -410,7 +410,9 @@ class Chain:
         self._log(query)
         cur.execute(query, (self.chain,))
         try:
-            updateDate, = cur.fetchone()
+            sqlUpdateDate, = cur.fetchone()
+            updateDate = datetime.datetime.strptime(sqlUpdateDate, "%Y-%m-%d %H:%M")
+
             # TODO filter used files
         except TypeError as e:
             updateDate = self._todatetime("19700101")
