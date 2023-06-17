@@ -61,7 +61,10 @@ class Chain:
         while continuePaging:
             page = page + 1
             links, continuePaging = self.download_page(page, firstOfLast)
-            firstofLast = links[0]['name']
+            if len(links) == 0:
+                firstOfLast = None
+            else:
+                firstOfLast = firstLink['name']
             downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
             downloaded = downloaded + downloaded_files
         return(downloaded)
@@ -123,8 +126,8 @@ class Chain:
             priceFiles = [f for f in filenames if self.priceR.match(f)]
             self._log("No last update time, using all files in folder")
         else:
-            matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
-            priceFiles = [file for key, file in matchPrice if key > updateDate]
+            matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in filenames}
+            priceFiles = [file for key, file in matchPrice.items() if key > updateDate]
             self._log(f"last update date {updateDate}, fetching files after that date")
         self._log(f"Fetching {len(priceFiles)} files")
         return priceFiles
@@ -406,7 +409,7 @@ class Chain:
             updateDate, = cur.fetchone()
             # TODO filter used files
         except TypeError:
-            updateDate = self._todatetime("19700101")
+            updateDate = self._todatetime("20230618")
         return updateDate
 
     def _insertStores(self, stores, storeLinks):
