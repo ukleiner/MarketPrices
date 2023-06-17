@@ -144,7 +144,8 @@ class Store:
             raise WrongChainFileException
         self.subChain = int(context.find('SubChainId').text)
         self.storeId = int(context.find('StoreId').text)
-        # TODO raise special error if store missing to tirgger store update
+        # TODO add store date
+        # Insert to price the store file date
         try:
             self.store = self.getStore()
         except TypeError:

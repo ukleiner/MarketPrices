@@ -35,8 +35,6 @@ class Chain:
         try:
             self._setChain()
         except TypeError:
-            # TODO alert the user in some way about this
-            # so it can trigger obtainStores
             self.updateChain()
 
     def download(self):
@@ -413,7 +411,7 @@ class Chain:
             sqlUpdateDate, = cur.fetchone()
             updateDate = datetime.datetime.strptime(sqlUpdateDate, "%Y-%m-%d %H:%M")
 
-            # TODO filter used files
+            # TODO archive used files
         except TypeError as e:
             updateDate = self._todatetime("19700101")
         return updateDate
