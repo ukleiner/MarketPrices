@@ -193,7 +193,7 @@ class Chain:
                         storeFileName = elem.text
                 if storeFileName is not None and link is not None:
                     break
-        if os.path.exists(f"{self.dirname}/{storeFileName}"):
+        if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
             raise NoSuchStoreException
 
         return(self._download_gz(storeFileName, link))
@@ -213,9 +213,9 @@ class Chain:
             data = f.read()
             context = ET.fromstring(data)
         chainId = int(context.find('.//CHAINID').text)
-        if self.chain is not None and chainId != self.chain:
+        if self.chainId is not None and chainId != self.chainId:
             # chainId in file should be like setup
-            logger.error(f"Chain {self.chainId}: file with wrong chain Id supplied {fn}")
+            logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
             raise WrongChainFileException
         try:
             chain = self._getChain(chainId)
@@ -299,7 +299,7 @@ class Chain:
         cur = con.cursor()
         query = "SELECT id,subchainId FROM subchain WHERE chain = ?"
         cur.execute(query, (chain,))
-        return({sc.subchainId: sc.id for sc in cur.fetchall()})
+        return({subchainId: iid for iid, subchainId in cur.fetchall()})
 
     def _getStores(self, chain):
         '''
@@ -315,7 +315,7 @@ class Chain:
         cur = con.cursor()
         query = "SELECT id, store FROM store WHERE chain = ?"
         cur.execute(query, (chain,))
-        return({store.store: store.id for store in cur.fetchall()})
+        return({ store: sid for sid, store in cur.fetchall()})
 
     def _getInfoTable(self, local_path):
         url =f'http://{self.url}/{local_path}'
