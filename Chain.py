@@ -163,7 +163,7 @@ class Chain:
                 items = store.obtainItems()
                 if len(items) > 0:
                     prices = store.getPrices(items)
-                    store.logPrices(prices)
+                    store.insertPrices(prices)
                 else:
                     self._log(f"No manufacturer items in this store")
 
