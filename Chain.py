@@ -95,6 +95,7 @@ class Chain:
                 else:
                     if self.priceR.search(elem.text):
                         fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
+                        self._log(f'fd {fileDate} ud {updateDate}')
                         if fileDate <= updateDate or firstOfLast == elem.text:
                             continuePaging = False
                             self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
@@ -121,12 +122,13 @@ class Chain:
         '''
         updateDate = self._getLatestDate()
         filenames = next(os.walk(self.dirname), (None, None, []))[2]
+        priceFiles = [f for f in filenames if self.priceR.match(f)]
         if updateDate is None:
-            priceFiles = [f for f in filenames if self.priceR.match(f)]
+            relFiles = priceFiles
             self._log("No last update time, using all files in folder")
         else:
-            matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in filenames}
-            priceFiles = [file for key, file in matchPrice.items() if key > updateDate]
+            matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
+            relFiles = [file for key, file in matchPrice.items() if key > updateDate]
             self._log(f"last update date {updateDate}, fetching files after that date")
         self._log(f"Fetching {len(priceFiles)} files")
         return priceFiles
@@ -143,7 +145,7 @@ class Chain:
             Side effects:
                 updates db
         '''
-        # newFiles = self.download()
+        newFiles = self.download()
         files = self.fileList()
         for fn in files:
             storeFile = f"{self.dirname}/{fn}"
@@ -400,18 +402,17 @@ class Chain:
         cur = con.cursor()
         query = '''SELECT price.update_date
         FROM price
-        INNER JOIN item on price.item = item.id
-        INNER JOIN item_link on item.id = item_link.item
-        INNER JOIN chainItem ON item_link.chainItem = chainItem.id
+        INNER JOIN chainItem on chainItem.id = price.item
         WHERE chainItem.chain = ?
         ORDER BY price.update_date DESC
         LIMIT 1
         '''
+        self._log(query)
         cur.execute(query, (self.chain,))
         try:
             updateDate, = cur.fetchone()
             # TODO filter used files
-        except TypeError:
+        except TypeError as e:
             updateDate = self._todatetime("19700101")
         return updateDate
 
