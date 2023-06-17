@@ -161,8 +161,11 @@ class Chain:
                     continue
             finally:
                 items = store.obtainItems()
-                prices = store.getPrices(items)
-                store.logPrices(prices)
+                if len(items) > 0:
+                    prices = store.getPrices(items)
+                    store.logPrices(prices)
+                else:
+                    self._log(f"No manufacturer items in this store")
 
     def getStoreFile(self):
         '''
