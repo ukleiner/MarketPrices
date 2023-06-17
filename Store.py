@@ -67,7 +67,7 @@ class Store:
         self._log(f"Obtaining items from manufactuer {self.manu}")
         search_path = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
         xmlItems = self.context.findall(search_path)
-        return([Item(self.chain, xmlItem) for xmlItem in xmlItems])
+        return([Item(self.chain, self.store, xmlItem) for xmlItem in xmlItems])
 
     def getPrices(self, items):
         '''
@@ -87,13 +87,16 @@ class Store:
         self._log(f"got {len(itemsObj)} items")
         itemCodes = list(itemsObj.keys())
         ids_codes = self._getItemIds(itemCodes)
-        ids, codes = zip(*ids_codes)
+        try:
+            ids, codes = zip(*ids_codes)
+        except ValueError:
+            codes = []
         missing_codes = list(set(itemCodes)-set(codes))
 
         if len(missing_codes) > 0:
             missing_items = [itemsObj[code] for code in missing_codes]
             self._insertChainItems(missing_items)
-            ids_codes = self._getItemCodes(itemCodes)
+            ids_codes = self._getItemIds(itemCodes)
         prices = [itemsObj[code].getPriceItem(iid) for iid, code in ids_codes]
         return(prices)
 
@@ -114,8 +117,8 @@ class Store:
         con = self.db.getConn()
         cur = con.cursor()
         query = '''INSERT INTO
-        price (`item`,`update_date`,`price`)
-        VALUES(?,?,?)'''
+        price (`store`, `item`,`update_date`,`price`)
+        VALUES(?, ?,?,?)'''
         cur.executemany(query, prices)
         con.commit()
         insPrices = cur.rowcount
@@ -147,7 +150,7 @@ class Store:
         except TypeError:
             raise NoStoreException
 
-    def _getItemIds(self, itemsCodes):
+    def _getItemIds(self, itemCodes):
         '''
             get internal item ids for itemsCodes for a specific store
             ---------------------
@@ -159,8 +162,10 @@ class Store:
             Side effects:
                 sets the store values in the object
         '''
+        con = self.db.getConn()
+        cur = con.cursor()
         query = f"SELECT id, code FROM chainItem WHERE chain = ? AND code IN ({','.join(['?']*len(itemCodes))})"
-        cur.execute(query, (self.chain, itemCodes))
+        cur.execute(query, [self.chain] + itemCodes)
         return cur.fetchall()
 
     def _insertChainItems(self, items):
@@ -175,12 +180,12 @@ class Store:
             Side effects:
                 update db
         '''
-        itemsList = [item.getChainItem(self.chain) for item in items]
+        itemsList = [item.getChainItem() for item in items]
         con = self.db.getConn()
         cur = con.cursor()
         query = '''
         INSERT INTO
-        storeItem (`chain`, `code`, `name`, `manufacturer`, `units`)
+        chainItem (`chain`, `code`, `name`, `manufacturer`, `units`)
         VALUES (?,?,?,?,?)
         '''
         cur.executemany(query, itemsList)

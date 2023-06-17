@@ -1,18 +1,19 @@
 class Item:
-    def __init__(self, chain, xmlObject):
+    def __init__(self, chain, store, xmlObject):
         self.chain = chain
+        self.store = store
         self._parse(xmlObject)
 
     def getChainItem(self):
         return([self.chain, self.code, self.name, self.manu, self.units])
 
     def getPriceItem(self, item):
-        return([item, self.update_date, self.price])
+        return([self.store, item, self.update_date, self.price])
 
     def _parse(self, obj):
         for elem in obj.iter():
             if elem.tag == 'ItemCode':
-                self.code = elem.text
+                self.code = int(elem.text)
             elif elem.tag == 'ItemName':
                 self.name = elem.text
             elif elem.tag == 'ManufacturerName':
