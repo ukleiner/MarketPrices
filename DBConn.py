@@ -27,7 +27,7 @@ class DB:
         query = '''CREATE TABLE IF NOT EXISTS chain (
         id INTEGER PRIMARY KEY,
         Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        chainId INTEGER,
+        chainId INTEGER UNIQUE,
         chainName TEXT
         )
         '''
@@ -44,7 +44,8 @@ class DB:
         subchainId INTEGER,
         name TEXT,
         type INTEGER,
-        FOREIGN KEY(chain) REFERENCES chain(id)
+        FOREIGN KEY(chain) REFERENCES chain(id),
+        UNIQUE(chain, subchainId)
         )
         '''
         self.cur.execute(query)
@@ -57,7 +58,8 @@ class DB:
         store INTEGER NOT NULL,
         name TEXT NOT NULL,
         city TEXT,
-        FOREIGN KEY(chain) REFERENCES chain(id)
+        FOREIGN KEY(chain) REFERENCES chain(id),
+        UNIQUE(chain, store)
         )'''
         self.cur.execute(query)
 
@@ -68,7 +70,8 @@ class DB:
         subchain INTEGER NOT NULL,
         store INTEGER NOT NULL,
         FOREIGN KEY(subchain) REFERENCES subchain(id)
-        FOREIGN KEY(store) REFERENCES store(id)
+        FOREIGN KEY(store) REFERENCES store(id),
+        UNIQUE(subchain, store)
         )'''
         self.cur.execute(query)
 
@@ -82,7 +85,8 @@ class DB:
         name TEXT NOT NULL,
         manufacturer TEXT NOT NULL,
         units TEXT,
-        FOREIGN KEY(chain) REFERENCES chain(id)
+        FOREIGN KEY(chain) REFERENCES chain(id),
+        UNIQUE(chain, code)
         )'''
         self.cur.execute(query)
 
@@ -95,7 +99,8 @@ class DB:
         update_date DATETIME NOT NULL,
         price REAL,
         FOREIGN KEY(store) REFERENCES store(id)
-        FOREIGN KEY(item) REFERENCES chainItem(id)
+        FOREIGN KEY(item) REFERENCES chainItem(id),
+        UNIQUE(store, item, update_date)
         )'''
         self.cur.execute(query)
 
@@ -103,7 +108,7 @@ class DB:
         query = '''CREATE TABLE IF NOT EXISTS item(
         id INTEGER PRIMARY KEY,
         Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        item_name INTEGER NOT NULL
+        item_name INTEGER NOT NULL UNIQUE
         )'''
         self.cur.execute(query)
 
@@ -113,7 +118,8 @@ class DB:
         item INTEGER NOT NULL,
         chainItem INTEGER NOT NULL,
         FOREIGN KEY(item) REFERENCES item(id)
-        FOREIGN KEY(chainItem) REFERENCES chainItem(id)
+        FOREIGN KEY(chainItem) REFERENCES chainItem(id),
+        UNIQUE(item, chainItem)
         )'''
         self.cur.execute(query)
 
