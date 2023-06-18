@@ -23,7 +23,7 @@ import datetime
 
 from loguru import logger
 
-from Chain import Chain
+from Shufersal import Shufersal
 from Store import Store
 from DBConn import DB
 
@@ -113,7 +113,7 @@ def main():
 
 def init_chains(db):
     chains = []
-    shufersal = Chain(db, "prices.shufersal.co.il", None, None, "Shufersal", 7290027600007, "קטיף.")
+    shufersal = Shufersal(db)
     chains.append(shufersal)
     return chains
 

@@ -68,43 +68,21 @@ class Chain:
         return(downloaded)
 
     def download_page(self, page, updateDate=None, firstOfLast=None):
-        continuePaging=True
-        if updateDate is None:
-            updateDate = self._getLatestDate()
-        table = self._getInfoTable(f"FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}")
-        links = []
-        link = None
-        priceFileName = None
-        skip = False
-        for elem in table.iter():
-            if elem.tag == "tr":
-                link = None
-                priceFileName = None
-                skip = False
-            elif skip:
-                continue
-            elif elem.tag == "td":
-                if elem.text is None:
-                    a_elem = elem.find('a')
-                    if a_elem is None:
-                        continue
-                    link = a_elem.get('href')
-                    link = "".join(link.split())
-                else:
-                    if self.priceR.search(elem.text):
-                        fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
-                        self._log(f'fd {fileDate} ud {updateDate}')
-                        if fileDate <= updateDate or firstOfLast == elem.text:
-                            continuePaging = False
-                            self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
-                            break
-                        priceFileName = elem.text
-
-                if priceFileName is not None and link is not None:
-                    links.append({'link': link, 'name': priceFileName})
-                    logger.info(f"Found price file {priceFileName}")
-                    skip = True
-        return links, continuePaging
+        '''
+            Download page with links to FullPrice pages
+            impl. per chain subclass
+            ---------------------
+            Parameters:
+                page - page in paging system
+                updateDate - earliest date to download
+                firstOfLast - first file of last paging, to prevent infinite downloads
+            Uses:
+            =====================
+            Return:
+                list of dics containing link to download and file name
+            Side effects:
+        '''
+        pass
 
 
     def fileList(self):
@@ -125,11 +103,11 @@ class Chain:
             relFiles = priceFiles
             self._log("No last update time, using all files in folder")
         else:
+            self._log(f"last update date {updateDate}, fetching files after that date")
             matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
             relFiles = [file for key, file in matchPrice.items() if key > updateDate]
-            self._log(f"last update date {updateDate}, fetching files after that date")
-        self._log(f"Fetching {len(priceFiles)} files")
-        return priceFiles
+        self._log(f"Fetching {len(relFiles)} files")
+        return relFiles
 
     def scanStores(self):
         '''
@@ -184,24 +162,7 @@ class Chain:
             Side effects:
                 Download file with stores data
         '''
-        table = self._getInfoTable("FileObject/UpdateCategory?catID=5")
-
-        storeFileName = None
-        link = None
-        for elem in table.iter():
-            if elem.tag == "td":
-                if elem.text is None:
-                    link = elem.find('a').get('href')
-                    link = "".join(link.split())
-                else:
-                    if self.storeR.search(elem.text):
-                        storeFileName = elem.text
-                if storeFileName is not None and link is not None:
-                    break
-        if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
-            raise NoSuchStoreException
-
-        return(self._download_gz(storeFileName, link))
+        pass
 
     def obtainStores(self, fn):
         '''
@@ -322,15 +283,6 @@ class Chain:
         cur.execute(query, (chain,))
         return({ store: sid for sid, store in cur.fetchall()})
 
-    def _getInfoTable(self, local_path):
-        url =f'http://{self.url}/{local_path}'
-        self._log(f"searching for table {url}")
-        r = requests.get(url)
-        res = r.text
-        html = etree.HTML(res)
-        table = html.find("body/div/table/tbody")
-        return(table)
-
     def _download_gz(self, fn, link):
         '''
             Download a gzip file
@@ -403,11 +355,11 @@ class Chain:
     def _getLatestDate(self):
         con = self.db.getConn()
         cur = con.cursor()
-        query = '''SELECT price.update_date
+        query = '''SELECT price.filedate
         FROM price
         INNER JOIN chainItem on chainItem.id = price.item
         WHERE chainItem.chain = ?
-        ORDER BY price.update_date DESC
+        ORDER BY price.filedate DESC
         LIMIT 1
         '''
         cur.execute(query, (self.chain,))
@@ -450,5 +402,3 @@ class Chain:
 
     def _log(self, mes):
         logger.info(f"Chain {self.chainId}: {mes}")
-
-
