@@ -1,12 +1,7 @@
 import os
-import re
-import datetime
-import gzip
-import xml.etree.ElementTree as ET
 
 import requests
 from lxml import etree
-from loguru import logger
 
 from Chain import Chain
 
@@ -72,7 +67,7 @@ class Shufersal(Chain):
 
                 if priceFileName is not None and link is not None:
                     links.append({'link': link, 'name': priceFileName})
-                    logger.info(f"Found price file {priceFileName}")
+                    self._log(f"Found price file {priceFileName}")
                     skip = True
         return links, continuePaging
 
