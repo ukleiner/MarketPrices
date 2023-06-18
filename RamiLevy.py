@@ -1,24 +1,59 @@
 import os
-
+import re
 import requests
 from lxml import etree
 
 from Chain import Chain
 
-class Shufersal(Chain):
+csrfTokenR = re.compile('<meta name="csrftoken" content="(.*)"')
+class RamiLevy(Chain):
     '''
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "http://prices.shufersal.co.il"
-        username = None
-        password = None
-        name = 'Shufersal'
-        chainId = 7290027600007
+        url = "https://url.retail.publishedprices.co.il"
+        username = "RamiLevi"
+        password = ''
+        name = 'RamiLevy'
+        chainId = 7290058140886
         manu = "קטיף."
         super().__init__(db, url, username, password, name, chainId, manu)
-    def login():
-        return requests.Session()
+        # self._log(self.session.cookies)
+
+    def login(self):
+        # download self.url
+        # find csrftoken meta tag and extract csrftoken
+        # send to self.url/user a post request with 
+        # username: usenrmae; password: password; csrftoken: csrftoken
+        # Set-Cookie cftpSID
+        session = requests.Session()
+        enterUrl = f"{self.url}/login"
+        loginPage = session.get(enterUrl, verify=False)
+        loginPageContent = loginPage.text
+        loginCsrfToken = self._getCSRF(loginPageContent)
+
+        loginUrl = f"{enterUrl}/user"
+        r = session.post(loginUrl,
+                data={
+                    'username': self.username,
+                    'password': self.password,
+                    'csrftoken': loginCsrfToken
+                },
+            verify=False)
+        self._log(f"Post to {self.username}:{self.password}@{loginUrl} with response code {r.status_code}")
+        return session
+
+    def filesInfo(self):
+        # get PriceFull file list
+        # csrftoken, sSearc="PriceFull"
+        # post to: url.retail.publishedprices.co.il/file/json/dir
+        # get filename, filter and than request 
+        # zipname: "Archivename.zip", cd:"/", csrftoken, ID:[files .gz]
+        url = f"{self.url}/file/json/dir"
+        data = requests.post(url, data={'sSearch': 'PriceFull' }, verify=False)
+        with open("tmp_res.json", 'w') as f:
+            f.write(data.text)
+            self._log(f"Saved to tmp_res.json")
 
     def download_page(self, page, updateDate=None, firstOfLast=None):
         '''
@@ -105,7 +140,10 @@ class Shufersal(Chain):
 
         return(self._download_gz(storeFileName, link))
 
-     # ========== PRIVATE ==========
+    # ========== PRIVATE ==========
+    def _getCSRF(self, content):
+        return csrfTokenR.search(content).group(1)
+
     def _getInfoTable(self, local_path):
         '''
             In Shufersal interface get information table

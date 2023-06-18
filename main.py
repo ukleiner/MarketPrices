@@ -24,6 +24,7 @@ import datetime
 from loguru import logger
 
 from Shufersal import Shufersal
+from RamiLevy import RamiLevy
 from Store import Store
 from DBConn import DB
 
@@ -117,9 +118,17 @@ def init_chains(db):
     chains.append(shufersal)
     return chains
 
+@logger.catch
+def testing():
+    dbc = DB()
+    ramiLevy = RamiLevy(dbc)
+    # ramiLevy.login()
+    # ramiLevy.filesInfo()
+
 if __name__ == '__main__':
     logger.add("./logs/scanning_{time}.log", rotation="03:00", compression="zip", enqueue=True, filter=lambda record: record["level"].no < 30, format="{time:YYYY-MM-DD HH:mm:ss.SSS}| {message}", level="INFO")
     logger.add("./logs/crash.log", backtrace=True, diagnose=True, level="WARNING")
     logger.info("Starting")
-    main()
+    # main()
+    testing()
     logger.info("stopped")

@@ -32,11 +32,25 @@ class Chain:
 
         self._log(f"Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
 
+        self.session = self.login()
+        return
         try:
             self._setChain()
         except TypeError:
             self.updateChain()
 
+    def login(self):
+        '''
+        Login to site if needed
+        ---------------------
+        Parameters:
+        Uses:
+        =====================
+        Return:
+            session object with relevant cookies
+        Side effects:
+            downloads files to dirname
+        '''
     def download(self):
         '''
             Download new data files
