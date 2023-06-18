@@ -6,6 +6,7 @@ from loguru import logger
 from CustomExceptions import WrongChainFileException, NoStoreException
 from Item import Item
 
+dateR = re.compile('-(\d{12})')
 class Store:
     def __init__(self, db, fn, targetManu, chainId, chain):
         '''
@@ -27,6 +28,9 @@ class Store:
         self.chainId = chainId
         self.chain = chain
         logger.info(f"Start store for chain {self.chainId} using file {self.fn}")
+        datetime = dateR.search(fn).group(1)
+        self.datetime = datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]), int(date[8:10]), int(date[10:12]))
+
 
         with gzip.open(fn, 'rt') as f:
             data = f.read()
@@ -67,7 +71,7 @@ class Store:
         self._log(f"Obtaining items from manufactuer {self.manu}")
         search_path = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
         xmlItems = self.context.findall(search_path)
-        return([Item(self.chain, self.store, xmlItem) for xmlItem in xmlItems])
+        return([Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in xmlItems])
 
     def getPrices(self, items):
         '''
@@ -117,8 +121,8 @@ class Store:
         con = self.db.getConn()
         cur = con.cursor()
         query = '''INSERT INTO
-        price (`store`, `item`,`update_date`,`price`)
-        VALUES(?, ?,?,?)'''
+        price (`filedate`, `store`, `item`,`update_date`,`price`)
+        VALUES(?,?,?,?,?)'''
         cur.executemany(query, prices)
         con.commit()
         insPrices = cur.rowcount
@@ -144,8 +148,6 @@ class Store:
             raise WrongChainFileException
         self.subChain = int(context.find('SubChainId').text)
         self.storeId = int(context.find('StoreId').text)
-        # TODO add store date
-        # Insert to price the store file date
         try:
             self.store = self.getStore()
         except TypeError:

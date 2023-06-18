@@ -94,13 +94,14 @@ class DB:
         query = '''CREATE TABLE IF NOT EXISTS price (
         id INTEGER PRIMARY KEY,
         Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        filedate DATETIME NOT NULL,
         store INTEGER NOT NULL,
         item INTEGER NOT NULL,
         update_date DATETIME NOT NULL,
         price REAL,
         FOREIGN KEY(store) REFERENCES store(id)
         FOREIGN KEY(item) REFERENCES chainItem(id),
-        UNIQUE(store, item, update_date)
+        UNIQUE(filedate, store, item)
         )'''
         self.cur.execute(query)
 
