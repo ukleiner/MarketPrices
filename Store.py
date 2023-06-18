@@ -1,4 +1,6 @@
+import re
 import gzip
+import datetime
 import xml.etree.ElementTree as ET
 
 from loguru import logger
@@ -28,7 +30,7 @@ class Store:
         self.chainId = chainId
         self.chain = chain
         logger.info(f"Start store for chain {self.chainId} using file {self.fn}")
-        datetime = dateR.search(fn).group(1)
+        date = dateR.search(fn).group(1)
         self.datetime = datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]), int(date[8:10]), int(date[10:12]))
 
 
@@ -98,9 +100,11 @@ class Store:
         missing_codes = list(set(itemCodes)-set(codes))
 
         if len(missing_codes) > 0:
+            self._log(f"Missing {len(itemsObj)} chain items")
             missing_items = [itemsObj[code] for code in missing_codes]
             self._insertChainItems(missing_items)
             ids_codes = self._getItemIds(itemCodes)
+        self._log(f"got {len(ids_codes)} id codes")
         prices = [itemsObj[code].getPriceItem(iid) for iid, code in ids_codes]
         return(prices)
 

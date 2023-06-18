@@ -145,6 +145,7 @@ class Chain:
         '''
         # newFiles = self.download()
         files = self.fileList()
+        missingStore = False
         for fn in files:
             storeFile = f"{self.dirname}/{fn}"
             try:
@@ -157,9 +158,13 @@ class Chain:
                     store = Store(self.db, storeFile, self.targetManu, self.chainId, self.chain)
                 except NoSuchStoreException:
                     self._log(f"Store in file {storeFile} missing from latest stores file")
+                    missingStore = True
                     # removed store, continue
-                    continue
             finally:
+                if missingStore:
+                    missingStore = False
+                    continue
+
                 items = store.obtainItems()
                 if len(items) > 0:
                     prices = store.getPrices(items)
@@ -405,7 +410,6 @@ class Chain:
         ORDER BY price.update_date DESC
         LIMIT 1
         '''
-        self._log(query)
         cur.execute(query, (self.chain,))
         try:
             sqlUpdateDate, = cur.fetchone()

@@ -10,7 +10,7 @@ class Item:
         return([self.chain, self.code, self.name, self.manu, self.units])
 
     def getPriceItem(self, item):
-        return([self._strdate, .self.store, item, self.update_date, self.price])
+        return([self._strdate, self.store, item, self.update_date, self.price])
 
     def _parse(self, obj):
         for elem in obj.iter():
