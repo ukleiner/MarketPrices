@@ -33,7 +33,6 @@ class Chain:
         self._log(f"Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
 
         self.session = self.login()
-        return
         try:
             self._setChain()
         except TypeError:
@@ -312,7 +311,7 @@ class Chain:
                 downloads file
         '''
         self._log(f"Downloading file {link}")
-        data = requests.get(link)
+        data = self.session.get(link, verify=False)
         filename = f'{self.dirname}/{fn}.gz'
         with open(filename, 'wb') as f:
             f.write(data.content)
@@ -363,8 +362,11 @@ class Chain:
         self._log(f"Created new subchain in db, {cur.lastrowid}")
         return cur.lastrowid
 
-    def _todatetime(self, date):
-        return datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]))
+    def _todatetime(self, date, typ='str'):
+        if typ == 'str':
+            return datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]))
+        elif typ == 'cerberus':
+            return datetime.datetime.strptime(date, '%Y-%m-%dT%H:%M:%SZ')
 
     def _getLatestDate(self):
         con = self.db.getConn()

@@ -1,6 +1,9 @@
 import os
 import re
+from io import BytesIO
+from zipfile import ZipFile
 import requests
+
 from lxml import etree
 
 from Chain import Chain
@@ -40,72 +43,38 @@ class RamiLevy(Chain):
         self._log(f"Post to {self.username}:{self.password}@{loginUrl} with response code {r.status_code}")
         return session
 
-    def filesInfo(self):
+    def download_page(self, page=1, updateDate=None, firstOfLast=None):
+        '''
+            get PriceFull file list created after updateDate
+            ---------------------
+            Parameters:
+                updateDate - update date of reference
+                csrfToken - cerberus token for identification
+            Uses:
+            =====================
+            Return:
+                1. list of dics containing link to download and file name
+                2. False, shouldn't continue paging
+            Side effects:
+        '''
         # get PriceFull file list
         # csrftoken, sSearc="PriceFull"
         # post to: url.retail.publishedprices.co.il/file/json/dir
         # get filename, filter and than request 
         # zipname: "Archivename.zip", cd:"/", csrftoken, ID:[files .gz]
-        csrfToken = self._getCSRF()
-        url = f"{self.url}/file/json/dir"
-        data = self.session.post(url, data={'csrftoken':csrfToken, 'sSearch': 'PriceFull' }, verify=False)
-        with open("tmp_res.json", 'w') as f:
-            f.write(data.text)
-            self._log(f"Saved to tmp_res.json")
-
-    def download_page(self, page, updateDate=None, firstOfLast=None):
-        '''
-            Download page with links to FullPrice pages
-            impl. per chain subclass
-            ---------------------
-            Parameters:
-                page - page in paging system
-                updateDate - earliest date to download
-                firstOfLast - first file of last paging, to prevent infinite downloads
-            Uses:
-            =====================
-            Return:
-                1. list of dics containing link to download and file name
-                2. should the paging continue
-            Side effects:
-        '''
-        continuePaging=True
         if updateDate is None:
             updateDate = self._getLatestDate()
-        table = self._getInfoTable(f"FileObject/UpdateCategory/?catID=2&storeId=0&sort=Time&sortdir=DESC&page={page}")
-        links = []
-        link = None
-        priceFileName = None
-        skip = False
-        for elem in table.iter():
-            if elem.tag == "tr":
-                link = None
-                priceFileName = None
-                skip = False
-            elif skip:
-                continue
-            elif elem.tag == "td":
-                if elem.text is None:
-                    a_elem = elem.find('a')
-                    if a_elem is None:
-                        continue
-                    link = a_elem.get('href')
-                    link = "".join(link.split())
-                else:
-                    if self.priceR.search(elem.text):
-                        fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
-                        self._log(f'fd {fileDate} ud {updateDate}')
-                        if fileDate <= updateDate or firstOfLast == elem.text:
-                            continuePaging = False
-                            self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
-                            break
-                        priceFileName = elem.text
-
-                if priceFileName is not None and link is not None:
-                    links.append({'link': link, 'name': priceFileName})
-                    self._log(f"Found price file {priceFileName}")
-                    skip = True
-        return links, continuePaging
+        csrfToken = self._getCSRF()
+        url = f"{self.url}/file/json/dir"
+        data = self.session.post(url, data={
+            'csrftoken':csrfToken,
+            'sSearch': 'PriceFull',
+            'iDisplayLength': 100000,
+            }, verify=False)
+        json_data = data.json()
+        allFilesData = {f['DT_RowId']: self._todatetime(f['time'], typ='cerberus') for f in json_data['aaData']}
+        filesData = [{ 'link': f'{self.url}/file/d/{rid}', 'name': rid[:-3]} for rid, date in allFilesData.items() if date > updateDate]
+        return filesData, False
 
     def getStoreFile(self):
         '''
@@ -119,20 +88,18 @@ class RamiLevy(Chain):
             Side effects:
                 Download file with stores data
         '''
-        table = self._getInfoTable("FileObject/UpdateCategory?catID=5")
-
-        storeFileName = None
-        link = None
-        for elem in table.iter():
-            if elem.tag == "td":
-                if elem.text is None:
-                    link = elem.find('a').get('href')
-                    link = "".join(link.split())
-                else:
-                    if self.storeR.search(elem.text):
-                        storeFileName = elem.text
-                if storeFileName is not None and link is not None:
-                    break
+        csrfToken = self._getCSRF()
+        url = f"{self.url}/file/json/dir"
+        data = self.session.post(url, data={
+            'csrftoken':csrfToken,
+            'sSearch': 'PriceFull',
+            'iDisplayLength': 100000,
+            }, verify=False)
+        json_data = data.json()
+        storeFiles = [{ f['DT_RowId']: self._todatetime(self.dateR.search(f['DT_RowId']).group(1)) } for f in json_data['aaData'] if self.storeR.match(f['DT_RowId'])]
+        storeFile = max(storeFiles, key=storeFiles.get)
+        storeFileName = storeFile[:-3]
+        link = f'{self.url}/file/d/{storeFile}'
         if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
             raise NoSuchStoreException
 

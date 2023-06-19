@@ -123,7 +123,7 @@ def testing():
     dbc = DB()
     ramiLevy = RamiLevy(dbc)
     # ramiLevy.login()
-    ramiLevy.filesInfo()
+    # ramiLevy.download()
 
 if __name__ == '__main__':
     logger.add("./logs/scanning_{time}.log", rotation="03:00", compression="zip", enqueue=True, filter=lambda record: record["level"].no < 30, format="{time:YYYY-MM-DD HH:mm:ss.SSS}| {message}", level="INFO")
