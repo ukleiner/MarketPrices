@@ -27,12 +27,9 @@ class RamiLevy(Chain):
         # username: usenrmae; password: password; csrftoken: csrftoken
         # Set-Cookie cftpSID
         session = requests.Session()
-        enterUrl = f"{self.url}/login"
-        loginPage = session.get(enterUrl, verify=False)
-        loginPageContent = loginPage.text
-        loginCsrfToken = self._getCSRF(loginPageContent)
+        loginCsrfToken = self._getCSRF(session=session, typ="login")
 
-        loginUrl = f"{enterUrl}/user"
+        loginUrl = f"{self.url}/login/user"
         r = session.post(loginUrl,
                 data={
                     'username': self.username,
@@ -49,8 +46,9 @@ class RamiLevy(Chain):
         # post to: url.retail.publishedprices.co.il/file/json/dir
         # get filename, filter and than request 
         # zipname: "Archivename.zip", cd:"/", csrftoken, ID:[files .gz]
+        csrfToken = self._getCSRF()
         url = f"{self.url}/file/json/dir"
-        data = requests.post(url, data={'sSearch': 'PriceFull' }, verify=False)
+        data = self.session.post(url, data={'csrftoken':csrfToken, 'sSearch': 'PriceFull' }, verify=False)
         with open("tmp_res.json", 'w') as f:
             f.write(data.text)
             self._log(f"Saved to tmp_res.json")
@@ -141,8 +139,20 @@ class RamiLevy(Chain):
         return(self._download_gz(storeFileName, link))
 
     # ========== PRIVATE ==========
-    def _getCSRF(self, content):
-        return csrfTokenR.search(content).group(1)
+    def _getCSRF(self, session=None, typ="regular"):
+        if session is None:
+            session = self.session
+        url = self.url
+        if typ == "regular":
+            url = f"{self.url}/file"
+        elif typ == "login":
+            url = f"{self.url}/login"
+        else:
+            # TODO special exception
+            raise Exception
+        csrfPage = session.get(url, verify=False)
+        csrfPageContent = csrfPage.text
+        return csrfTokenR.search(csrfPageContent).group(1)
 
     def _getInfoTable(self, local_path):
         '''
