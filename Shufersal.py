@@ -105,6 +105,60 @@ class Shufersal(Chain):
 
         return(self._download_gz(storeFileName, link))
 
+    def obtainStores(self, fn):
+        '''
+            Obtain chain stores
+            ---------------------
+            Parameters:
+                fn - file name
+            =====================
+            Return:
+                list of Item objects
+        '''
+        self._log(f"Obtaining stores from {fn}")
+        with gzip.open(fn, 'rt') as f:
+            data = f.read()
+            context = ET.fromstring(data)
+
+        chainId = int(context.find('.//CHAINID').text)
+        if self.chainId is not None and chainId != self.chainId:
+            # chainId in file should be like setup
+            logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
+            raise WrongChainFileException
+        try:
+            self.chain = self._getChain(chainId)
+        except TypeError:
+            self.chain = self._insertChain(chainId)
+
+        subchains = self._getSubchains(self.chain)
+        stores = self._getStores(self.chain)
+
+        storesElem = context.find('.//STORES')
+        storesIns = {}
+        storeLinks = {}
+        for store in storesElem:
+            if store.tag == "STORES":
+                continue
+
+            storeId = int(store.find("STOREID").text)
+            if storeId in stores:
+                continue
+
+            subchainId = store.find('SUBCHAINID').text
+            if subchainId not in subchains:
+                scname = store.find('SUBCHAINNAME').text
+                subchain = self._insertSubchain(self.chain, subchainId, scname)
+                subchains[subchainId] = subchain
+
+            subchain = subchains[subchainId]
+            storeName = store.find("STORENAME").text
+            city = store.find("CITY").text
+
+            storesIns[storeId] = [self.chain, storeId, storeName, city]
+            storeLinks[storeId] = subchain
+
+        self._insertStores(storesIns, storeLinks)
+
      # ========== PRIVATE ==========
     def _getInfoTable(self, local_path):
         '''
