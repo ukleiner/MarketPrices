@@ -4,7 +4,7 @@ from io import BytesIO
 from zipfile import ZipFile
 import requests
 
-from lxml import etree
+import xml.etree.ElementTree as ET
 
 from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
 from Chain import Chain
@@ -122,9 +122,9 @@ class RamiLevy(Chain):
         ftype = fn.split('.')[-1]
         with open(fn, encoding='utf-16') as f:
             data = f.read()
-            context = etree.fromstring(data)
+            context = ET.fromstring(data)
 
-        chainId = int(context.find('.//CHAINID').text)
+        chainId = int(context.find('.//ChainId').text)
         if self.chainId is not None and chainId != self.chainId:
             # chainId in file should be like setup
             logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
@@ -134,32 +134,31 @@ class RamiLevy(Chain):
         except TypeError:
             self.chain = self._insertChain(chainId)
 
-        subchains = self._getSubchains(self.chain)
+        subchains = self._getSubchains(self.chain) # TODO check this
         stores = self._getStores(self.chain)
 
-        storesElem = context.find('.//STORES')
+        subchainsElem = context.find('.//SubChains')
         storesIns = {}
         storeLinks = {}
-        for store in storesElem:
-            if store.tag == "STORES":
-                continue
-
-            storeId = int(store.find("STOREID").text)
-            if storeId in stores:
-                continue
-
-            subchainId = store.find('SUBCHAINID').text
-            if subchainId not in subchains:
-                scname = store.find('SUBCHAINNAME').text
-                subchain = self._insertSubchain(self.chain, subchainId, scname)
+        for sc in subchainsElem:
+            subchainId = int(sc.find('.//SubChainId').text)
+            if subchainId in subchains:
+                subchain = subchains[subchainId]
+            else:
+                subchainName = int(sc.find('.//SubChainName').text)
+                subchain = self._insertSubchain(self.chain, subchainId, subchainName)
                 subchains[subchainId] = subchain
 
-            subchain = subchains[subchainId]
-            storeName = store.find("STORENAME").text
-            city = store.find("CITY").text
+            storesElem = sc.find('.//Stores')
+            for store in storesElem:
+                storeId = int(store.find("StoreId").text)
+                if storeId in stores:
+                    continue
+                storeName = store.find("StoreName").text
+                city = store.find("City").text
 
-            storesIns[storeId] = [self.chain, storeId, storeName, city]
-            storeLinks[storeId] = subchain
+                storesIns[storeId] = [self.chain, storeId, storeName, city]
+                storeLinks[storeId] = subchain
 
         self._insertStores(storesIns, storeLinks)
 
