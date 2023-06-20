@@ -71,9 +71,22 @@ class Store:
             Side effects:
         '''
         self._log(f"Obtaining items from manufactuer {self.manu}")
-        search_path = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
-        xmlItems = self.context.findall(search_path)
-        return([Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in xmlItems])
+        manu_search_path = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
+        manuXmlItems = self.context.findall(search_path)
+        manuItems = [Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in manuXmlItems]
+
+        codeItems = []
+        if self.itemCodes is not None:
+            for code in self.itemCodes:
+                self._log(f"Obtaining item with code {code}")
+                _items = self.context.findall(f'Items/Item/ItemCode[.="{code}"]...')
+                if len(_items) > 0:
+                    xmlItem = _items[0]
+                    codeItems.append(Item(self.chain, self.store, self.datetime, xmlItem)
+
+        items = manuXmlItems + codeItems
+
+        return items
 
     def getPrices(self, items):
         '''

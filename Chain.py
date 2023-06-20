@@ -15,12 +15,13 @@ class Chain:
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, url, username, password, name, chainId, manu):
+    def __init__(self, db, url, username, password, name, chainId, manu, codeItems = None):
         self.db = db
         self.name = name
         self.chainId = chainId
         self.chain = None
         self.targetManu = manu
+        self.codeItems = codeItems
         self.dirname = f"./data/{name}"
         self.url = url
         self.username = username
@@ -140,7 +141,7 @@ class Chain:
         for fn in files:
             storeFile = f"{self.dirname}/{fn}"
             try:
-                store = Store(self.db, storeFile, self.targetManu, self.chainId, self.chain)
+                store = Store(self.db, storeFile, self.targetManu, self.codeItems, self.chainId, self.chain)
             except NoStoreException:
                 self._log(f"Missing store from file {storeFile}")
                 try:

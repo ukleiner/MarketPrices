@@ -20,9 +20,9 @@ class RamiLevy(Chain):
         password = ''
         name = 'RamiLevy'
         chainId = 7290058140886
-        manu = "קטיף."
-        super().__init__(db, url, username, password, name, chainId, manu)
-        # self._log(self.session.cookies)
+        manu = "ביכורי השקמה"
+        codeItems = [7290000012346]
+        super().__init__(db, url, username, password, name, chainId, manu, codeItems)
 
     def login(self):
         # download self.url
@@ -58,11 +58,6 @@ class RamiLevy(Chain):
                 2. False, shouldn't continue paging
             Side effects:
         '''
-        # get PriceFull file list
-        # csrftoken, sSearc="PriceFull"
-        # post to: url.retail.publishedprices.co.il/file/json/dir
-        # get filename, filter and than request 
-        # zipname: "Archivename.zip", cd:"/", csrftoken, ID:[files .gz]
         if updateDate is None:
             updateDate = self._getLatestDate()
         csrfToken = self._getCSRF()
