@@ -6,6 +6,7 @@ import requests
 
 from lxml import etree
 
+from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
 from Chain import Chain
 
 csrfTokenR = re.compile('<meta name="csrftoken" content="(.*)"')
@@ -88,22 +89,24 @@ class RamiLevy(Chain):
             Side effects:
                 Download file with stores data
         '''
+        self._log('in here')
         csrfToken = self._getCSRF()
         url = f"{self.url}/file/json/dir"
         data = self.session.post(url, data={
             'csrftoken':csrfToken,
-            'sSearch': 'PriceFull',
+            'sSearch': 'Stores',
             'iDisplayLength': 100000,
             }, verify=False)
         json_data = data.json()
-        storeFiles = [{ f['DT_RowId']: self._todatetime(self.dateR.search(f['DT_RowId']).group(1)) } for f in json_data['aaData'] if self.storeR.match(f['DT_RowId'])]
+        storeFiles = { f['DT_RowId']: self._todatetime(self.dateR.search(f['DT_RowId']).group(1)) for f in json_data['aaData'] if self.storeR.match(f['DT_RowId'])}
+        self._log(storeFiles)
         storeFile = max(storeFiles, key=storeFiles.get)
-        storeFileName = storeFile[:-3]
+        storeFileName = storeFile # xml
         link = f'{self.url}/file/d/{storeFile}'
-        if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
+        if os.path.exists(f"{self.dirname}/{storeFileName}"):
             raise NoSuchStoreException
 
-        return(self._download_gz(storeFileName, link))
+        return(self._download_xml(storeFileName, link))
 
     # ========== PRIVATE ==========
     def _getCSRF(self, session=None, typ="regular"):

@@ -188,9 +188,19 @@ class Chain:
                 list of Item objects
         '''
         self._log(f"Obtaining stores from {fn}")
-        with gzip.open(fn, 'rt') as f:
-            data = f.read()
-            context = ET.fromstring(data)
+        ftype = fn.split('.')[-1]
+        if ftype == 'gz':
+            with gzip.open(fn, 'rt') as f:
+                data = f.read()
+                context = ET.fromstring(data)
+        elif ftype == 'xml':
+            with open(fn, encoding='utf-16') as f:
+                data = f.read()
+                context = etree.fromstring(data)
+        else:
+            # TODO raise customexception
+            pass
+
         chainId = int(context.find('.//CHAINID').text)
         if self.chainId is not None and chainId != self.chainId:
             # chainId in file should be like setup
@@ -296,6 +306,16 @@ class Chain:
         cur.execute(query, (chain,))
         return({ store: sid for sid, store in cur.fetchall()})
 
+    def _download_xml(self, fn, link):
+        data = self.session.get(link, verify=False)
+        content = data.content
+        # content = b''.join(data.content.split('\x00'))
+        filename = f'{self.dirname}/{fn}'
+        with open(filename, 'wb') as f:
+            f.write(content)
+            self._log(f"Saved to {filename}")
+        return filename
+
     def _download_gz(self, fn, link):
         '''
             Download a gzip file
@@ -312,9 +332,10 @@ class Chain:
         '''
         self._log(f"Downloading file {link}")
         data = self.session.get(link, verify=False)
+        content = data.content
         filename = f'{self.dirname}/{fn}.gz'
         with open(filename, 'wb') as f:
-            f.write(data.content)
+            f.write(content)
             self._log(f"Saved to {filename}")
         return filename
 
