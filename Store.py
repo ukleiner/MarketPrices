@@ -10,14 +10,15 @@ from Item import Item
 
 dateR = re.compile('-(\d{12})')
 class Store:
-    def __init__(self, db, fn, targetManu, chainId, chain):
+    def __init__(self, db, fn, targetManu, itemCodes, chainId, chain):
         '''
         Initialize a store inside a chain
         ---------------------
         Parameters:
             db -  handle to DB
             fn - filename
-            targetManu - manufacturer to taret it's products
+            targetManu - manufacturer to target it's products
+            itemCodes - specific item codes to search for
             chainId - chain external ID
             chain - chain internal ID
         =====================
@@ -27,6 +28,7 @@ class Store:
         self.db = db
         self.fn = fn
         self.manu = targetManu
+        self.itemCodes = itemCodes
         self.chainId = chainId
         self.chain = chain
         logger.info(f"Start store for chain {self.chainId} using file {self.fn}")
@@ -71,8 +73,8 @@ class Store:
             Side effects:
         '''
         self._log(f"Obtaining items from manufactuer {self.manu}")
-        manu_search_path = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
-        manuXmlItems = self.context.findall(search_path)
+        manuSearchPath = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
+        manuXmlItems = self.context.findall(manuSearchPath)
         manuItems = [Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in manuXmlItems]
 
         codeItems = []
@@ -82,10 +84,9 @@ class Store:
                 _items = self.context.findall(f'Items/Item/ItemCode[.="{code}"]...')
                 if len(_items) > 0:
                     xmlItem = _items[0]
-                    codeItems.append(Item(self.chain, self.store, self.datetime, xmlItem)
+                    codeItems.append(Item(self.chain, self.store, self.datetime, xmlItem))
 
-        items = manuXmlItems + codeItems
-
+        items = manuItems + codeItems
         return items
 
     def getPrices(self, items):
@@ -144,8 +145,6 @@ class Store:
         con.commit()
         insPrices = cur.rowcount
         self._log(f"Logged {insPrices} item prices")
-
-
 
     # ===========PRIVATE=========
     def _storeDetails(self, context):

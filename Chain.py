@@ -15,13 +15,13 @@ class Chain:
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, url, username, password, name, chainId, manu, codeItems = None):
+    def __init__(self, db, url, username, password, name, chainId, manu, itemCodes = None):
         self.db = db
         self.name = name
         self.chainId = chainId
         self.chain = None
         self.targetManu = manu
-        self.codeItems = codeItems
+        self.itemCodes = itemCodes
         self.dirname = f"./data/{name}"
         self.url = url
         self.username = username
@@ -51,6 +51,8 @@ class Chain:
         Side effects:
             downloads files to dirname
         '''
+        pass
+
     def download(self):
         '''
             Download new data files
@@ -135,13 +137,13 @@ class Chain:
             Side effects:
                 updates db
         '''
-        # newFiles = self.download()
+        newFiles = self.download()
         files = self.fileList()
         missingStore = False
         for fn in files:
             storeFile = f"{self.dirname}/{fn}"
             try:
-                store = Store(self.db, storeFile, self.targetManu, self.codeItems, self.chainId, self.chain)
+                store = Store(self.db, storeFile, self.targetManu, self.itemCodes, self.chainId, self.chain)
             except NoStoreException:
                 self._log(f"Missing store from file {storeFile}")
                 try:
@@ -202,7 +204,9 @@ class Chain:
             Side effects:
                 downloads file and updates db
         '''
-        storeFile = self.getStoreFile()
+        # storeFile = self.getStoreFile()
+        fn = "./data/RamiLevy/Stores7290058140886-202306200505.xml"
+        storeFile = fn
         self.obtainStores(storeFile)
      # ========== PRIVATE ==========
     def _getChain(self, chain):

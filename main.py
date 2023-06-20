@@ -122,6 +122,7 @@ def init_chains(db):
 def testing():
     dbc = DB()
     ramiLevy = RamiLevy(dbc)
+    ramiLevy.scanStores()
     # ramiLevy.login()
     # ramiLevy.download()
 

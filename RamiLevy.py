@@ -21,15 +21,21 @@ class RamiLevy(Chain):
         name = 'RamiLevy'
         chainId = 7290058140886
         manu = "ביכורי השקמה"
-        codeItems = [7290000012346]
-        super().__init__(db, url, username, password, name, chainId, manu, codeItems)
+        itemCodes = [7290000012346]
+        super().__init__(db, url, username, password, name, chainId, manu, itemCodes)
 
     def login(self):
-        # download self.url
-        # find csrftoken meta tag and extract csrftoken
-        # send to self.url/user a post request with 
-        # username: usenrmae; password: password; csrftoken: csrftoken
-        # Set-Cookie cftpSID
+        '''
+        Login to site if needed
+        ---------------------
+        Parameters:
+        Uses:
+        =====================
+        Return:
+            session object with relevant cookies
+        Side effects:
+            downloads files to dirname
+        '''
         session = requests.Session()
         loginCsrfToken = self._getCSRF(session=session, typ="login")
 
@@ -84,7 +90,6 @@ class RamiLevy(Chain):
             Side effects:
                 Download file with stores data
         '''
-        self._log('in here')
         csrfToken = self._getCSRF()
         url = f"{self.url}/file/json/dir"
         data = self.session.post(url, data={
@@ -94,7 +99,6 @@ class RamiLevy(Chain):
             }, verify=False)
         json_data = data.json()
         storeFiles = { f['DT_RowId']: self._todatetime(self.dateR.search(f['DT_RowId']).group(1)) for f in json_data['aaData'] if self.storeR.match(f['DT_RowId'])}
-        self._log(storeFiles)
         storeFile = max(storeFiles, key=storeFiles.get)
         storeFileName = storeFile # xml
         link = f'{self.url}/file/d/{storeFile}'
@@ -172,24 +176,3 @@ class RamiLevy(Chain):
         csrfPage = session.get(url, verify=False)
         csrfPageContent = csrfPage.text
         return csrfTokenR.search(csrfPageContent).group(1)
-
-    def _getInfoTable(self, local_path):
-        '''
-            In Shufersal interface get information table
-            ---------------------
-            Parameters:
-                local_path - xml path to table
-            Uses:
-            =====================
-            Return:
-                xml tree of the table
-            Side effects:
-        '''
-
-        url =f'{self.url}/{local_path}'
-        self._log(f"searching for table {url}")
-        r = requests.get(url)
-        res = r.text
-        html = etree.HTML(res)
-        table = html.find("body/div/table/tbody")
-        return(table)
