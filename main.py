@@ -25,6 +25,7 @@ from loguru import logger
 
 from Shufersal import Shufersal
 from RamiLevy import RamiLevy
+from Yohananof import Yohananof
 from Store import Store
 from DBConn import DB
 
@@ -115,14 +116,15 @@ def main():
 def init_chains(db):
     chains = []
     shufersal = Shufersal(db)
-    chains.append(shufersal)
+    ramiLevy = RamiLevy(db)
+    chains.append(shufersal, ramiLevy)
     return chains
 
 @logger.catch
 def testing():
     dbc = DB()
-    ramiLevy = RamiLevy(dbc)
-    ramiLevy.scanStores()
+    yohananof = Yohananof(dbc)
+    yohananof.scanStores()
     # ramiLevy.login()
     # ramiLevy.download()
 

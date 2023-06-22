@@ -72,12 +72,15 @@ class Store:
                 list of Item objects
             Side effects:
         '''
-        self._log(f"Obtaining items from manufactuer {self.manu}")
-        manuSearchPath = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
-        manuXmlItems = self.context.findall(manuSearchPath)
-        manuItems = [Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in manuXmlItems]
-
+        manuItems = []
         codeItems = []
+        lenItems = []
+        if self.manu is not None:
+            self._log(f"Obtaining items from manufactuer {self.manu}")
+            manuSearchPath = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
+            manuXmlItems = self.context.findall(manuSearchPath)
+            manuItems = [Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in manuXmlItems]
+
         if self.itemCodes is not None:
             for code in self.itemCodes:
                 self._log(f"Obtaining item with code {code}")
@@ -85,8 +88,19 @@ class Store:
                 if len(_items) > 0:
                     xmlItem = _items[0]
                     codeItems.append(Item(self.chain, self.store, self.datetime, xmlItem))
+        length
 
-        items = manuItems + codeItems
+        if self.lenCode is not None:
+                self._log(f"Obtaining item with code up to {self.lenCode} digits")
+                _lenItems = self.context.findall(f'Items/Item')
+                for _item in _lenItems:
+                    code = _item.find('ItemCode').text
+                    if len(code) <= _lenItems:
+                    lenItems.append(Item(self.chain, self.store, self.datetime, _item))
+
+
+
+        items = manuItems + codeItems + lenItems
         return items
 
     def getPrices(self, items):

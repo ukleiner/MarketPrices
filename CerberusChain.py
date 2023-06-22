@@ -14,7 +14,7 @@ class CerberusChain(Chain):
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, username, password, name, chainId, manu, itemCodes):
+    def __init__(self, db, username, password, name, chainId, manu, itemCodes, lenCode=None):
         url = "https://url.retail.publishedprices.co.il"
         username = "RamiLevi"
         password = ''
@@ -22,7 +22,7 @@ class CerberusChain(Chain):
         chainId = 7290058140886
         manu = "ביכורי השקמה"
         itemCodes = [7290000012346]
-        super().__init__(db, url, username, password, name, chainId, manu, itemCodes)
+        super().__init__(db, url, username, password, name, chainId, manu, itemCodes, lenCode)
 
     def login(self):
         '''
@@ -140,15 +140,15 @@ class CerberusChain(Chain):
         storesIns = {}
         storeLinks = {}
         for sc in subchainsElem:
-            subchainId = int(sc.find('.//SubChainId').text)
+            subchainId = int(sc.find('SubChainId').text)
             if subchainId in subchains:
                 subchain = subchains[subchainId]
             else:
-                subchainName = int(sc.find('.//SubChainName').text)
+                subchainName = int(sc.find('SubChainName').text)
                 subchain = self._insertSubchain(self.chain, subchainId, subchainName)
                 subchains[subchainId] = subchain
 
-            storesElem = sc.find('.//Stores')
+            storesElem = sc.find('Stores')
             for store in storesElem:
                 storeId = int(store.find("StoreId").text)
                 if storeId in stores:
