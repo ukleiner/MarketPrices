@@ -75,6 +75,7 @@ class Store:
         manuItems = []
         codeItems = []
         lenItems = []
+        catItems = []
         if self.manu is not None:
             self._log(f"Obtaining items from manufactuer {self.manu}")
             manuSearchPath = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
@@ -96,11 +97,18 @@ class Store:
                 for _item in _lenItems:
                     code = _item.find('ItemCode').text
                     if len(code) <= _lenItems:
-                    lenItems.append(Item(self.chain, self.store, self.datetime, _item))
+                        lenItems.append(Item(self.chain, self.store, self.datetime, _item))
+
+        if self.codeCategoryR is not None:
+            self._log(f"Obtaining item matching code category {self.codeCategoryR}")
+            _catItems = self.context.findall(f'Items/Item')
+            for _item in _catItems:
+                code = _item.find('ItemCode').text
+                if self.codeCategoryR.match(code):
+                    catItems.append(Item(self.chain, self.store, self.datetime, _item))
 
 
-
-        items = manuItems + codeItems + lenItems
+        items = manuItems + codeItems + lenItems + catItems
         return items
 
     def getPrices(self, items):

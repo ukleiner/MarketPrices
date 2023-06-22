@@ -14,15 +14,9 @@ class CerberusChain(Chain):
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, username, password, name, chainId, manu, itemCodes, lenCode=None):
+    def __init__(self, db, username, password, name, chainId, manu=None, itemCodes=None, lenCode=None, codeCategoryR=None):
         url = "https://url.retail.publishedprices.co.il"
-        username = "RamiLevi"
-        password = ''
-        name = 'RamiLevy'
-        chainId = 7290058140886
-        manu = "ביכורי השקמה"
-        itemCodes = [7290000012346]
-        super().__init__(db, url, username, password, name, chainId, manu, itemCodes, lenCode)
+        super().__init__(db, url, username, password, name, chainId, manu, itemCodes, lenCode, codeCategory)
 
     def login(self):
         '''

@@ -12,4 +12,5 @@ class RamiLevy(CerberusChain):
         chainId = 7290058140886
         manu = "ביכורי השקמה"
         itemCodes = [7290000012346]
-        super().__init__(db, url, username, password, name, chainId, manu, itemCodes)
+        codeCategoryR = re.compile("7290000000")
+        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)

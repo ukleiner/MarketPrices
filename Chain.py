@@ -15,7 +15,7 @@ class Chain:
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, url, username, password, name, chainId, manu, itemCodes = None, lenCode=None):
+    def __init__(self, db, url, username, password, name, chainId, manu=None, itemCodes = None, lenCode=None, codeCategoryR=None):
         self.db = db
         self.name = name
         self.chainId = chainId
@@ -23,6 +23,7 @@ class Chain:
         self.targetManu = manu
         self.itemCodes = itemCodes
         self.lenCode = lenCode
+        self.codeCategoryR = codeCategoryR
         self.dirname = f"./data/{name}"
         self.url = url
         self.username = username
