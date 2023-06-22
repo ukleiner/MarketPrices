@@ -13,5 +13,5 @@ class TivTaam(CerberusChain):
         password = ''
         name = 'TivTaam'
         chainId = 7290873255550
-        codeCategoryR = re.compile(r'>\\d{1,7}<')
+        codeCategoryR = re.compile(r'>\d{1,7}<')
         super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)

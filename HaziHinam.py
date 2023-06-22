@@ -11,5 +11,5 @@ class HaziHinam(CerberusChain):
         password = ''
         name = 'HaziHinam'
         chainId = 7290700100008
-        codeCategoryR = re.compile(r'>\\d{1,4}<')
+        codeCategoryR = re.compile(r'>\d{1,4}<')
         super().__init__(db, url, username, password, name, chainId, codeCategoryR)

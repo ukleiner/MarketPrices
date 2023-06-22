@@ -97,7 +97,7 @@ class Store:
             _catItems = self.context.findall(f'Items/Item')
             for _item in _catItems:
                 code = _item.find('ItemCode').text
-                if self.codeCategoryR.match(code):
+                if self.codeCategoryR.search(code) is not None:
                     catItems.append(Item(self.chain, self.store, self.datetime, _item))
 
 
