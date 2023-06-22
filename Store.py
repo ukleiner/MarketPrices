@@ -10,7 +10,7 @@ from Item import Item
 
 dateR = re.compile('-(\d{12})')
 class Store:
-    def __init__(self, db, fn, targetManu, itemCodes, chainId, chain):
+    def __init__(self, db, fn, targetManu, itemCodes, codeCategoryR, chainId, chain):
         '''
         Initialize a store inside a chain
         ---------------------
@@ -29,6 +29,7 @@ class Store:
         self.fn = fn
         self.manu = targetManu
         self.itemCodes = itemCodes
+        self.codeCategoryR = codeCategoryR
         self.chainId = chainId
         self.chain = chain
         logger.info(f"Start store for chain {self.chainId} using file {self.fn}")
@@ -90,14 +91,6 @@ class Store:
                     xmlItem = _items[0]
                     codeItems.append(Item(self.chain, self.store, self.datetime, xmlItem))
         length
-
-        if self.lenCode is not None:
-                self._log(f"Obtaining item with code up to {self.lenCode} digits")
-                _lenItems = self.context.findall(f'Items/Item')
-                for _item in _lenItems:
-                    code = _item.find('ItemCode').text
-                    if len(code) <= _lenItems:
-                        lenItems.append(Item(self.chain, self.store, self.datetime, _item))
 
         if self.codeCategoryR is not None:
             self._log(f"Obtaining item matching code category {self.codeCategoryR}")

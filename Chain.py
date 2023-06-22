@@ -15,14 +15,13 @@ class Chain:
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, url, username, password, name, chainId, manu=None, itemCodes = None, lenCode=None, codeCategoryR=None):
+    def __init__(self, db, url, username, password, name, chainId, manu=None, itemCodes = None, codeCategoryR=None):
         self.db = db
         self.name = name
         self.chainId = chainId
         self.chain = None
         self.targetManu = manu
         self.itemCodes = itemCodes
-        self.lenCode = lenCode
         self.codeCategoryR = codeCategoryR
         self.dirname = f"./data/{name}"
         self.url = url
@@ -151,7 +150,7 @@ class Chain:
                 try:
                     self.updateChain()
                     # store that was missing hasn't initiated, recap
-                    store = Store(self.db, storeFile, self.targetManu, self.chainId, self.chain)
+                    store = Store(self.db, storeFile, self.targetManu, self.itemCodes, self.codeCategoryR, self.chainId, self.chain)
                 except NoSuchStoreException:
                     self._log(f"Store in file {storeFile} missing from latest stores file")
                     missingStore = True
@@ -206,8 +205,7 @@ class Chain:
             Side effects:
                 downloads file and updates db
         '''
-        # storeFile = self.getStoreFile()
-        fn = "./data/RamiLevy/Stores7290058140886-202306200505.xml"
+        storeFile = self.getStoreFile()
         storeFile = fn
         self.obtainStores(storeFile)
      # ========== PRIVATE ==========
