@@ -1,0 +1,9 @@
+Missing stuff:
+
+No dates back of prices
+No dates back of stores, some stores are missing from the current store file but no 3 month have passed
+published prices uses utf16 but claims utf8 in the header for Stores
+RamiLevy manufacturerName missing in many items
+OsherAd measure cherry tomatoes in 100mL
+TivTaam - no known quantity of measure for garlic
+
