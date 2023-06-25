@@ -8,5 +8,5 @@ OsherAd measure cherry tomatoes in 100mL
 TivTaam - no known quantity of measure for garlic
 FreshMarket - bad file name for Stores
 KingStore - gz are actually zip, not all files available
-Matrixcatalong - different node names in the xml
+Matrixcatalong - different node names in the xml, (products, branches)
 Victory - wrong chain number in store file
