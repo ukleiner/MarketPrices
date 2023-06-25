@@ -5,6 +5,7 @@ from zipfile import ZipFile
 import requests
 
 import xml.etree.ElementTree as ET
+from loguru import logger
 
 from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
 from Chain import Chain
