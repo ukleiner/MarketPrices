@@ -7,8 +7,10 @@ class MatrixChain(Chain):
     '''
     The basic functions each Chain should implement
     '''
-    def __init__(self, db, username, password, name, chainId, manu=None, itemCodes=None, codeCategoryR=None):
+    def __init__(self, db, name, chainId, manu=None, itemCodes=None, codeCategoryR=None):
         url = "http://matrixcatalog.co.il/NBCompetitionRegulations.aspx"
+        username = None
+        password = None
         super().__init__(db, url, username, password, name, chainId, manu, itemCodes, codeCategoryR)
 
     def login(self):
@@ -167,18 +169,28 @@ class MatrixChain(Chain):
         '''
 
         self._log(f"searching for table for fiel type {fType}")
-        '''
         r = self.session.get(self.url, params={
             'code': self.chainId,
             'fileType': fType
             })
         res = r.text
+        '''
         with open("test.html", "w") as f:
             f.write(res)
-        '''
         with open("test.html", "r") as f:
            res = f.read()
-        # res = r.text
+       '''
         html = etree.HTML(res)
         table = html.find(".//div[@id='download_content']/table")
         return(table)
+
+### SubClasses ###
+class Victory(MatrixChain):
+    '''
+    The basic functions each Chain should implement
+    '''
+    def __init__(self, db):
+        name = 'Victory'
+        chainId = 7290803800003
+        manu = "ביכורי השדה צפון 1994 ג.ד. בעמ"
+        super().__init__(db, name, chainId, manu=manu)

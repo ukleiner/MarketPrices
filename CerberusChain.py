@@ -170,6 +170,7 @@ class CerberusChain(Chain):
         csrfPageContent = csrfPage.text
         return csrfTokenR.search(csrfPageContent).group(1)
 
+### SubClasses ###
 class RamiLevy(CerberusChain):
     '''
     The basic functions each Chain should implement
@@ -280,6 +281,7 @@ class TivTaam(CerberusChain):
         name = 'TivTaam'
         chainId = 7290873255550
         codeCategoryR = re.compile(r'\d{1,7}')
+        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class Yohananof(CerberusChain):
     '''
@@ -294,5 +296,4 @@ class Yohananof(CerberusChain):
         chainId = 7290803800003
         manu = "משתנה"
         itemCodes = None
-        super().__init__(db, url, username, password, name, chainId, manu, itemCodes)
-        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)
+        super().__init__(db, url, username, password, name, chainId, manu=manu, itemCodes=itemCodes)
