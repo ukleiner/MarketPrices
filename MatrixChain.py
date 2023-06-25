@@ -1,6 +1,12 @@
+import os
+import gzip
+import xml.etree.ElementTree as ET
 import requests
-from lxml import etree
 
+from lxml import etree
+from loguru import logger
+
+from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
 from Chain import Chain
 
 class MatrixChain(Chain):
@@ -8,7 +14,7 @@ class MatrixChain(Chain):
     The basic functions each Chain should implement
     '''
     def __init__(self, db, name, chainId, manu=None, itemCodes=None, codeCategoryR=None):
-        url = "http://matrixcatalog.co.il/NBCompetitionRegulations.aspx"
+        url = "http://matrixcatalog.co.il"
         username = None
         password = None
         super().__init__(db, url, username, password, name, chainId, manu, itemCodes, codeCategoryR)
@@ -44,6 +50,10 @@ class MatrixChain(Chain):
         if updateDate is None:
             updateDate = self._getLatestDate()
         table = self._getInfoTable("pricefull")
+        links = []
+        link = None
+        priceFileName = None
+        skip = False
         for elem in table.iter():
             if elem.tag == "tr":
                 link = None
@@ -52,12 +62,11 @@ class MatrixChain(Chain):
             elif skip:
                 continue
             elif elem.tag == "td":
-                if elem.text is None:
-                    a_elem = elem.find('a')
-                    if a_elem is None:
-                        continue
-                    link = a_elem.get('href')
-                    link = "".join(link.split())
+                aElem = elem.find('a')
+                if aElem is not None:
+                    link = aElem.get('href')
+                    link = "".join(link.split()).replace('\\', '/')
+                    link = f'{self.url}/{link}'
                 else:
                     if self.priceR.search(elem.text):
                         fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
@@ -71,7 +80,7 @@ class MatrixChain(Chain):
                     links.append({'link': link, 'name': priceFileName})
                     self._log(f"Found price file {priceFileName}")
                     skip = True
-        return filesData, continuePaging
+        return links, False
 
     def getStoreFile(self):
         '''
@@ -90,22 +99,26 @@ class MatrixChain(Chain):
         link = None
         for elem in table.iter():
             if elem.tag == "td":
-                if elem.text is None:
-                    link = elem.find('a').get('href')
-                    link = "".join(link.split())
+                aElem = elem.find('a')
+                if aElem is not None:
+                    link = aElem.get('href')
+                    link = "".join(link.split()).replace('\\', '/')
+                    link = f'{self.url}/{link}'
                 else:
-                    if self.storeR.search(elem.text):
+                    if elem.text is not None and self.storeR.search(elem.text):
                         storeFileName = elem.text
                 if storeFileName is not None and link is not None:
                     break
         if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
             raise NoSuchStoreException
 
+        self._log(f'link {link}')
         return(self._download_gz(storeFileName, link))
 
     def obtainStores(self, fn):
         '''
             Obtain chain stores
+            Has manual override for Victory, wrong store file ID
             ---------------------
             Parameters:
                 fn - file name
@@ -123,10 +136,11 @@ class MatrixChain(Chain):
         with gzip.open(fn, 'rt') as f:
             data = f.read()
             context = ET.fromstring(data)
-       storesElem = context.find('.//Branches')
-       for store in storesElem:
-           chainId = int(store.find('ChainID').text)
-            if self.chainId is not None and chainId != self.chainId:
+        storesElem = context.find('.//Branches')
+        for store in storesElem:
+            chainId = int(store.find('ChainID').text)
+            # TODO manual override for Victory, wrong chain ID
+            if self.name != 'Victory' and (self.chainId is not None and chainId != self.chainId):
                 # chainId in file should be like setup
                 logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
                 raise WrongChainFileException
@@ -169,17 +183,11 @@ class MatrixChain(Chain):
         '''
 
         self._log(f"searching for table for fiel type {fType}")
-        r = self.session.get(self.url, params={
+        r = self.session.get(f'{self.url}/NBCompetitionRegulations.aspx', params={
             'code': self.chainId,
             'fileType': fType
             })
         res = r.text
-        '''
-        with open("test.html", "w") as f:
-            f.write(res)
-        with open("test.html", "r") as f:
-           res = f.read()
-       '''
         html = etree.HTML(res)
         table = html.find(".//div[@id='download_content']/table")
         return(table)
@@ -191,6 +199,16 @@ class Victory(MatrixChain):
     '''
     def __init__(self, db):
         name = 'Victory'
-        chainId = 7290803800003
+        chainId = 7290696200003
+        manu = "ביכורי השדה צפון 1994 ג.ד. בעמ"
+        super().__init__(db, name, chainId, manu=manu)
+
+class HaShuk(MatrixChain):
+    '''
+    The basic functions each Chain should implement
+    '''
+    def __init__(self, db):
+        name = 'HaShuk'
+        chainId = 7290661400001
         manu = "ביכורי השדה צפון 1994 ג.ד. בעמ"
         super().__init__(db, name, chainId, manu=manu)
