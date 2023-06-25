@@ -126,8 +126,10 @@ class Chain:
             self._log("No last update time, using all files in folder")
         else:
             self._log(f"last update date {updateDate}, fetching files after that date")
-            matchPrice = {self._todatetime(self.dateR.search(f).group(1)): f for f in priceFiles}
-            relFiles = [file for key, file in matchPrice.items() if key > updateDate]
+            self._log(f"Starting with {len(priceFiles)} files")
+            matchPrice = {f: self._todatetime(self.dateR.search(f).group(1))  for f in priceFiles}
+
+            relFiles = [file for file, date in matchPrice.items() if date > updateDate]
         self._log(f"Fetching {len(relFiles)} files")
         return relFiles
 
@@ -143,7 +145,7 @@ class Chain:
             Side effects:
                 updates db
         '''
-        newFiles = self.download()
+        # newFiles = self.download()
         files = self.fileList()
         missingStore = False
         for fn in files:
@@ -172,7 +174,7 @@ class Chain:
                 items = store.obtainItems()
                 if len(items) > 0:
                     prices = store.getPrices(items)
-                    store.insertPrices(prices)
+                    # store.insertPrices(prices)
                 else:
                     self._log(f"No manufacturer items in this store")
 
