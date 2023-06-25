@@ -44,7 +44,7 @@ class Store:
 
         try:
             self._storeDetails(self.context)
-        except AttributeError as:
+        except AttributeError:
             logger.info(f"File {fn} not an xml Store file")
             raise WrongStoreFileException
         self._log(f"Inited")
@@ -83,9 +83,17 @@ class Store:
         codeItems = []
         lenItems = []
         catItems = []
+        # Check if MatrixChain
+        if self.context.find('Prices'):
+            self._log('Handling MatrixChain type')
+            manuSearch = "Products/Product/ManufactureName"
+            itemSearch = "Products/Product"
+        else:
+            manuSearch = "Items/Item/ManufacturerName"
+            itemSearch = "Items/Item"
         if self.manu is not None:
             self._log(f"Obtaining items from manufactuer {self.manu}")
-            manuSearchPath = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
+            manuSearchPath = f'{manuSearch}[.="{self.manu}"]...'
             manuXmlItems = self.context.findall(manuSearchPath)
             manuItems = [Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in manuXmlItems]
             self._log(f"Found {len(manuItems)} manufacturer items")
@@ -93,7 +101,7 @@ class Store:
         if self.itemCodes is not None:
             for code in self.itemCodes:
                 self._log(f"Obtaining item with code {code}")
-                _items = self.context.findall(f'Items/Item/ItemCode[.="{code}"]...')
+                _items = self.context.findall(f'{itemSearch}/ItemCode[.="{code}"]...')
                 if len(_items) > 0:
                     xmlItem = _items[0]
                     codeItems.append(Item(self.chain, self.store, self.datetime, xmlItem))
@@ -101,7 +109,8 @@ class Store:
 
         if self.codeCategoryR is not None:
             self._log(f"Obtaining item matching code category {self.codeCategoryR}")
-            _catItems = self.context.findall(f'Items/Item')
+            # Check if MatrixChain
+            _catItems = self.context.findall(itemSearch)
             for _item in _catItems:
                 code = _item.find('ItemCode').text
                 if self.codeCategoryR.search(code) is not None:
