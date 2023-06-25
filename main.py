@@ -7,14 +7,8 @@
     Return:
     Side effects:
 '''
-# http://prices.shufersal.co.il/ # for shufersal, no passcode
 # http://matrixcatalog.co.il/NBCompetitionRegulations.aspx # victory, no passcode
 # http://publishprice.ybitan.co.il/ # yenot bitan, no passcode
-# https://url.retail.publishedprices.co.il/login # TivTaam, yohananof, osherad,
-# Keshet Teamim, RamiLevi
-
-# Categories
-# Price, PriceFull, Promo, PromoFull, Stores
 
 import tracemalloc
 import timeit
@@ -24,10 +18,9 @@ import datetime
 from loguru import logger
 
 from Shufersal import Shufersal
-from RamiLevy import RamiLevy
-from Yohananof import Yohananof
 from KingStore import KingStore
-from Store import Store
+from CerberusChain import RamiLevy, Yohananof, Dabach, DorAlon, HaziHinam, Keshet, OsherAd, StopMarket, TivTaam, Yohananof
+from MatrixChain import MatrixChain
 from DBConn import DB
 
 _fn = "./data/Shufersal/PriceFull7290027600007-001-202306070300.xml"
@@ -124,12 +117,12 @@ def init_chains(db):
 @logger.catch
 def testing():
     dbc = DB()
-    kingStore = KingStore(dbc)
-    kingStore.scanStores()
-    # yohananof = Yohananof(dbc)
-    # yohananof.scanStores()
-    # ramiLevy.login()
-    # ramiLevy.download()
+    username = None
+    password = None
+    name = "MatrixChain"
+    chainId = 1
+    mc = MatrixChain(dbc, username, password, name, chainId)
+    mc.download_page()
 
 if __name__ == '__main__':
     logger.add("./logs/scanning_{time}.log", rotation="03:00", compression="zip", enqueue=True, filter=lambda record: record["level"].no < 30, format="{time:YYYY-MM-DD HH:mm:ss.SSS}| {message}", level="INFO")

@@ -40,10 +40,13 @@ class Chain:
         self._log(f"Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
 
         self.session = self.login()
+        self.chain = 555
+        '''
         try:
-            self._setChain()
+           self._setChain()
         except TypeError:
-            self.updateChain()
+           self.updateChain()
+        '''
 
     def login(self):
         '''
