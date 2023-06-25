@@ -35,18 +35,15 @@ class Chain:
 
         self.priceR = re.compile('^PriceFull')
         self.storeR = re.compile('^Stores')
-        self.dateR = re.compile('-(\d{8})\d{4}\.gz')
+        self.dateR = re.compile('-(\d{8})\d{4}')
 
         self._log(f"Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
 
         self.session = self.login()
-        self.chain = 555
-        '''
         try:
            self._setChain()
         except TypeError:
            self.updateChain()
-        '''
 
     def login(self):
         '''
@@ -301,12 +298,15 @@ class Chain:
         filename = f'{self.dirname}/{fn}.gz'
 
         if content[:2] == ZIP_MAGIC_NUMBER:
+            self._log(f"File {filename} is in ZIP format and will be unzipped")
             with ZipFile(io.BytesIO(content), "r") as myzip:
                 zipList = myzip.infolist()
                 with myzip.open(zipList[0]) as f:
                     content = f.read()
 
         if content[:2] != GZIP_MAGIC_NUMBER:
+            self._log(f'magic number {content[:2]}')
+            self._log(f"File {filename} is ungzipped and will be compressed")
             content = gzip.compress(content)
 
         with open(filename, 'wb') as f:
