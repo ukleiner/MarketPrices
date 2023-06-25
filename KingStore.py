@@ -20,8 +20,8 @@ class KingStore(Chain):
         password = None
         name = 'KingStore'
         chainId = 7290058108879
-        codeCategoryR = re.compile(r'>777\d{3}<')
-        super().__init__(db, url, username, password, name, chainId, codeCategoryR)
+        codeCategoryR = re.compile(r'777\d{3}')
+        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
     def login(self):
         return requests.Session()

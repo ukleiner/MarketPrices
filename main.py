@@ -26,6 +26,7 @@ from loguru import logger
 from Shufersal import Shufersal
 from RamiLevy import RamiLevy
 from Yohananof import Yohananof
+from KingStore import KingStore
 from Store import Store
 from DBConn import DB
 
@@ -123,8 +124,10 @@ def init_chains(db):
 @logger.catch
 def testing():
     dbc = DB()
-    yohananof = Yohananof(dbc)
-    yohananof.scanStores()
+    kingStore = KingStore(dbc)
+    kingStore.scanStores()
+    # yohananof = Yohananof(dbc)
+    # yohananof.scanStores()
     # ramiLevy.login()
     # ramiLevy.download()
 

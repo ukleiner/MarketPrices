@@ -45,7 +45,7 @@ class Store:
         try:
             self._storeDetails(self.context)
         except AttributeError:
-            logger.info("File {fn} not an xml Store file")
+            logger.info(f"File {fn} not an xml Store file")
             raise WrongStoreFileException
         self._log(f"Inited")
 
@@ -83,11 +83,13 @@ class Store:
         codeItems = []
         lenItems = []
         catItems = []
+        self._log(self.context)
         if self.manu is not None:
             self._log(f"Obtaining items from manufactuer {self.manu}")
             manuSearchPath = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
             manuXmlItems = self.context.findall(manuSearchPath)
             manuItems = [Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in manuXmlItems]
+            self._log(f"Found {len(manuItems)} manufacturer items")
 
         if self.itemCodes is not None:
             for code in self.itemCodes:
@@ -96,7 +98,7 @@ class Store:
                 if len(_items) > 0:
                     xmlItem = _items[0]
                     codeItems.append(Item(self.chain, self.store, self.datetime, xmlItem))
-        length
+            self._log(f"Found {len(codeItems)} items with code {code}")
 
         if self.codeCategoryR is not None:
             self._log(f"Obtaining item matching code category {self.codeCategoryR}")
@@ -105,6 +107,7 @@ class Store:
                 code = _item.find('ItemCode').text
                 if self.codeCategoryR.search(code) is not None:
                     catItems.append(Item(self.chain, self.store, self.datetime, _item))
+            self._log(f"Found {len(catItems)} code category items")
 
 
         items = manuItems + codeItems + lenItems + catItems

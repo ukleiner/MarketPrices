@@ -16,7 +16,7 @@ class Item:
         for elem in obj.iter():
             if elem.tag == 'ItemCode':
                 self.code = int(elem.text)
-            elif elem.tag == 'ItemName':
+            elif elem.tag in  ['ItemName', 'ItemNm']:
                 self.name = elem.text
             elif elem.tag == 'ManufacturerName':
                 self.manu = elem.text
