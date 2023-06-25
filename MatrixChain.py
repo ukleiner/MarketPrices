@@ -19,7 +19,7 @@ class MatrixChain(Chain):
         url = "http://matrixcatalog.co.il"
         username = None
         password = None
-        super().__init__(db, url, username, password, name, chainId, manu, itemCodes, codeCategoryR)
+        super().__init__(db, url, username, password, name, chainId, manu=manu, itemCodes=itemCodes, codeCategoryR=codeCategoryR)
 
     def login(self):
         '''
@@ -203,8 +203,9 @@ class Victory(MatrixChain):
     def __init__(self, db):
         name = 'Victory'
         chainId = 7290696200003
-        manu = "ביכורי השדה צפון 1994 ג.ד. בעמ"
-        super().__init__(db, name, chainId, manu=manu)
+        itemCodes = [7290017291123]
+        codeCategoryR = re.compile(r'^2\d{3}')
+        super().__init__(db, name, chainId, codeCategoryR=codeCategoryR, itemCodes = itemCodes)
 
 class HaShuk(MatrixChain):
     '''
