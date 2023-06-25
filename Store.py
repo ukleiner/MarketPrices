@@ -84,7 +84,7 @@ class Store:
         lenItems = []
         catItems = []
         # Check if MatrixChain
-        if self.context.find('Prices'):
+        if self.context.tag == 'Prices':
             self._log('Handling MatrixChain type')
             manuSearch = "Products/Product/ManufactureName"
             itemSearch = "Products/Product"

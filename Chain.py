@@ -145,7 +145,7 @@ class Chain:
             Side effects:
                 updates db
         '''
-        # newFiles = self.download()
+        newFiles = self.download()
         files = self.fileList()
         missingStore = False
         for fn in files:
@@ -174,7 +174,7 @@ class Chain:
                 items = store.obtainItems()
                 if len(items) > 0:
                     prices = store.getPrices(items)
-                    # store.insertPrices(prices)
+                    store.insertPrices(prices)
                 else:
                     self._log(f"No manufacturer items in this store")
 
