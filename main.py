@@ -20,7 +20,7 @@ from loguru import logger
 from Shufersal import Shufersal
 from KingStore import KingStore
 from CerberusChain import RamiLevy, Yohananof, Dabach, DorAlon, HaziHinam, Keshet, OsherAd, StopMarket, TivTaam, Yohananof
-from MatrixChain import MatrixChain
+from MatrixChain import Victory
 from DBConn import DB
 
 _fn = "./data/Shufersal/PriceFull7290027600007-001-202306070300.xml"
@@ -117,12 +117,9 @@ def init_chains(db):
 @logger.catch
 def testing():
     dbc = DB()
-    username = None
-    password = None
-    name = "MatrixChain"
-    chainId = 1
-    mc = MatrixChain(dbc, username, password, name, chainId)
-    mc.download_page()
+    victory = Victory(dbc)
+    # tab = victory._getInfoTable(None)
+    victory.scanStores()
 
 if __name__ == '__main__':
     logger.add("./logs/scanning_{time}.log", rotation="03:00", compression="zip", enqueue=True, filter=lambda record: record["level"].no < 30, format="{time:YYYY-MM-DD HH:mm:ss.SSS}| {message}", level="INFO")
