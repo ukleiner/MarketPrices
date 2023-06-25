@@ -44,7 +44,7 @@ class Store:
 
         try:
             self._storeDetails(self.context)
-        except AttributeError:
+        except AttributeError as:
             logger.info(f"File {fn} not an xml Store file")
             raise WrongStoreFileException
         self._log(f"Inited")
@@ -83,7 +83,6 @@ class Store:
         codeItems = []
         lenItems = []
         catItems = []
-        self._log(self.context)
         if self.manu is not None:
             self._log(f"Obtaining items from manufactuer {self.manu}")
             manuSearchPath = f'Items/Item/ManufacturerName[.="{self.manu}"]...'
@@ -183,11 +182,11 @@ class Store:
             Side effects:
                 sets the store values in the object
         '''
-        fileChain = int(context.find('ChainId').text)
+        fileChain = int(context.find('ChainID').text)
         if fileChain != self.chainId:
             raise WrongChainFileException
-        self.subChain = int(context.find('SubChainId').text)
-        self.storeId = int(context.find('StoreId').text)
+        self.subChain = int(context.find('SubChainID').text)
+        self.storeId = int(context.find('StoreID').text)
         try:
             self.store = self.getStore()
         except TypeError:
