@@ -6,4 +6,5 @@ published prices uses utf16 but claims utf8 in the header for Stores
 RamiLevy manufacturerName missing in many items
 OsherAd measure cherry tomatoes in 100mL
 TivTaam - no known quantity of measure for garlic
-
+FreshMarket - bad file name for Stores
+KingStore - gz are actually zip, not all files available

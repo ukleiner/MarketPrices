@@ -112,7 +112,6 @@ class CerberusChain(Chain):
                 list of Item objects
         '''
         self._log(f"Obtaining stores from {fn}")
-        ftype = fn.split('.')[-1]
         with open(fn, encoding='utf-16') as f:
             data = f.read()
             context = ET.fromstring(data)
@@ -170,3 +169,4 @@ class CerberusChain(Chain):
         csrfPage = session.get(url, verify=False)
         csrfPageContent = csrfPage.text
         return csrfTokenR.search(csrfPageContent).group(1)
+

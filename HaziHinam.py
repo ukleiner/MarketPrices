@@ -5,7 +5,6 @@ class HaziHinam(CerberusChain):
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        # TODO add filtering, many meat Items
         url = "https://url.retail.publishedprices.co.il"
         username = "HaziHinam"
         password = ''

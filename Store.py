@@ -1,11 +1,12 @@
 import re
 import gzip
+from zipfile import ZipFile
 import datetime
 import xml.etree.ElementTree as ET
 
 from loguru import logger
 
-from CustomExceptions import WrongChainFileException, NoStoreException
+from CustomExceptions import WrongChainFileException, WrongStoreFileException, NoStoreException
 from Item import Item
 
 dateR = re.compile('-(\d{12})')
@@ -40,7 +41,12 @@ class Store:
         with gzip.open(fn, 'rt') as f:
             data = f.read()
             self.context = ET.fromstring(data)
-        self._storeDetails(self.context)
+
+        try:
+            self._storeDetails(self.context)
+        except AttributeError:
+            logger.info("File {fn} not an xml Store file")
+            raise WrongStoreFileException
         self._log(f"Inited")
 
 

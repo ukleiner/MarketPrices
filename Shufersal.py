@@ -1,4 +1,5 @@
 import os
+import xml.etree.ElementTree as ET
 
 import requests
 from lxml import etree
@@ -17,7 +18,8 @@ class Shufersal(Chain):
         chainId = 7290027600007
         manu = "קטיף."
         super().__init__(db, url, username, password, name, chainId, manu)
-    def login():
+
+    def login(self):
         return requests.Session()
 
     def download_page(self, page, updateDate=None, firstOfLast=None):
@@ -61,7 +63,6 @@ class Shufersal(Chain):
                 else:
                     if self.priceR.search(elem.text):
                         fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
-                        self._log(f'fd {fileDate} ud {updateDate}')
                         if fileDate <= updateDate or firstOfLast == elem.text:
                             continuePaging = False
                             self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")

@@ -1,16 +1,21 @@
 import os
+import io
 import re
 import datetime
+from zipfile import ZipFile
 import gzip
+
 import xml.etree.ElementTree as ET
 
 import requests
 from lxml import etree
 from loguru import logger
 
-from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
+from CustomExceptions import WrongChainFileException, WrongStoreFileException, NoStoreException, NoSuchStoreException
 from Store import Store
 
+GZIP_MAGIC_NUMBER = b'\x1f\x8b'
+ZIP_MAGIC_NUMBER = b'PK'
 class Chain:
     '''
     The basic functions each Chain should implement
@@ -30,7 +35,7 @@ class Chain:
 
         self.priceR = re.compile('^PriceFull')
         self.storeR = re.compile('^Stores')
-        self.dateR = re.compile('-(\d{8})\d{4}')
+        self.dateR = re.compile('-(\d{8})\d{4}\.gz')
 
         self._log(f"Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
 
@@ -144,7 +149,7 @@ class Chain:
         for fn in files:
             storeFile = f"{self.dirname}/{fn}"
             try:
-                store = Store(self.db, storeFile, self.targetManu, self.itemCodes, self.chainId, self.chain)
+                store = Store(self.db, storeFile, self.targetManu, self.itemCodes, self.codeCategoryR, self.chainId, self.chain)
             except NoStoreException:
                 self._log(f"Missing store from file {storeFile}")
                 try:
@@ -155,6 +160,10 @@ class Chain:
                     self._log(f"Store in file {storeFile} missing from latest stores file")
                     missingStore = True
                     # removed store, continue
+            except WrongStoreFileException:
+                missingStore = True
+                self._log(f"Store file {storeFile} can't init a store")
+
             finally:
                 if missingStore:
                     missingStore = False
@@ -206,7 +215,6 @@ class Chain:
                 downloads file and updates db
         '''
         storeFile = self.getStoreFile()
-        storeFile = fn
         self.obtainStores(storeFile)
      # ========== PRIVATE ==========
     def _getChain(self, chain):
@@ -288,6 +296,16 @@ class Chain:
         data = self.session.get(link, verify=False)
         content = data.content
         filename = f'{self.dirname}/{fn}.gz'
+
+        if content[:2] == ZIP_MAGIC_NUMBER:
+            with ZipFile(io.BytesIO(content), "r") as myzip:
+                zipList = myzip.infolist()
+                with myzip.open(zipList[0]) as f:
+                    content = f.read()
+
+        if content[:2] != GZIP_MAGIC_NUMBER:
+            content = gzip.compress(content)
+
         with open(filename, 'wb') as f:
             f.write(content)
             self._log(f"Saved to {filename}")
