@@ -41,11 +41,35 @@ class MatrixChain(Chain):
         '''
         if updateDate is None:
             updateDate = self._getLatestDate()
-        data = self._getInfoTable("pricefull")
-        # TODO continue from here
-        allFilesData = {f['DT_RowId']: self._todatetime(f['time'], typ='cerberus') for f in json_data['aaData']}
-        filesData = [{ 'link': f'{self.url}/file/d/{rid}', 'name': rid[:-3]} for rid, date in allFilesData.items() if date > updateDate]
-        return filesData, False
+        table = self._getInfoTable("pricefull")
+        for elem in table.iter():
+            if elem.tag == "tr":
+                link = None
+                priceFileName = None
+                skip = False
+            elif skip:
+                continue
+            elif elem.tag == "td":
+                if elem.text is None:
+                    a_elem = elem.find('a')
+                    if a_elem is None:
+                        continue
+                    link = a_elem.get('href')
+                    link = "".join(link.split())
+                else:
+                    if self.priceR.search(elem.text):
+                        fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
+                        if fileDate <= updateDate or firstOfLast == elem.text:
+                            continuePaging = False
+                            self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
+                            break
+                        priceFileName = elem.text
+
+                if priceFileName is not None and link is not None:
+                    links.append({'link': link, 'name': priceFileName})
+                    self._log(f"Found price file {priceFileName}")
+                    skip = True
+        return filesData, continuePaging
 
     def getStoreFile(self):
         '''
@@ -59,22 +83,23 @@ class MatrixChain(Chain):
             Side effects:
                 Download file with stores data
         '''
-        csrfToken = self._getCSRF()
-        url = f"{self.url}/file/json/dir"
-        data = self.session.post(url, data={
-            'csrftoken':csrfToken,
-            'sSearch': 'Stores',
-            'iDisplayLength': 100000,
-            }, verify=False)
-        json_data = data.json()
-        storeFiles = { f['DT_RowId']: self._todatetime(self.dateR.search(f['DT_RowId']).group(1)) for f in json_data['aaData'] if self.storeR.match(f['DT_RowId'])}
-        storeFile = max(storeFiles, key=storeFiles.get)
-        storeFileName = storeFile # xml
-        link = f'{self.url}/file/d/{storeFile}'
-        if os.path.exists(f"{self.dirname}/{storeFileName}"):
+        table = self._getInfoTable("storesfull")
+        storeFileName = None
+        link = None
+        for elem in table.iter():
+            if elem.tag == "td":
+                if elem.text is None:
+                    link = elem.find('a').get('href')
+                    link = "".join(link.split())
+                else:
+                    if self.storeR.search(elem.text):
+                        storeFileName = elem.text
+                if storeFileName is not None and link is not None:
+                    break
+        if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
             raise NoSuchStoreException
 
-        return(self._download_xml(storeFileName, link))
+        return(self._download_gz(storeFileName, link))
 
     def obtainStores(self, fn):
         '''
@@ -87,45 +112,43 @@ class MatrixChain(Chain):
                 list of Item objects
         '''
         self._log(f"Obtaining stores from {fn}")
-        with open(fn, encoding='utf-16') as f:
-            data = f.read()
-            context = ET.fromstring(data)
-
-        chainId = int(context.find('.//ChainId').text)
-        if self.chainId is not None and chainId != self.chainId:
-            # chainId in file should be like setup
-            logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
-            raise WrongChainFileException
-        try:
-            self.chain = self._getChain(chainId)
-        except TypeError:
-            self.chain = self._insertChain(chainId)
-
-        subchains = self._getSubchains(self.chain) # TODO check this
+        subchains = self._getSubchains(self.chain)
         stores = self._getStores(self.chain)
 
-        subchainsElem = context.find('.//SubChains')
         storesIns = {}
         storeLinks = {}
-        for sc in subchainsElem:
-            subchainId = int(sc.find('SubChainId').text)
-            if subchainId in subchains:
-                subchain = subchains[subchainId]
-            else:
-                subchainName = int(sc.find('SubChainName').text)
-                subchain = self._insertSubchain(self.chain, subchainId, subchainName)
+
+        with gzip.open(fn, 'rt') as f:
+            data = f.read()
+            context = ET.fromstring(data)
+       storesElem = context.find('.//Branches')
+       for store in storesElem:
+           chainId = int(store.find('ChainID').text)
+            if self.chainId is not None and chainId != self.chainId:
+                # chainId in file should be like setup
+                logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
+                raise WrongChainFileException
+            try:
+                self.chain = self._getChain(chainId)
+            except TypeError:
+                self.chain = self._insertChain(chainId)
+
+            storeId = int(store.find("StoreID").text)
+            if storeId in stores:
+                continue
+
+            subchainId = store.find('SubChainID').text
+            if subchainId not in subchains:
+                scname = store.find('SubChainName').text
+                subchain = self._insertSubchain(self.chain, subchainId, scname)
                 subchains[subchainId] = subchain
 
-            storesElem = sc.find('Stores')
-            for store in storesElem:
-                storeId = int(store.find("StoreId").text)
-                if storeId in stores:
-                    continue
-                storeName = store.find("StoreName").text
-                city = store.find("City").text
+            subchain = subchains[subchainId]
+            storeName = store.find("StoreName").text
+            city = store.find("City").text
 
-                storesIns[storeId] = [self.chain, storeId, storeName, city]
-                storeLinks[storeId] = subchain
+            storesIns[storeId] = [self.chain, storeId, storeName, city]
+            storeLinks[storeId] = subchain
 
         self._insertStores(storesIns, storeLinks)
 
@@ -144,11 +167,18 @@ class MatrixChain(Chain):
         '''
 
         self._log(f"searching for table for fiel type {fType}")
+        '''
         r = self.session.get(self.url, params={
             'code': self.chainId,
             'fileType': fType
             })
         res = r.text
+        with open("test.html", "w") as f:
+            f.write(res)
+        '''
+        with open("test.html", "r") as f:
+           res = f.read()
+        # res = r.text
         html = etree.HTML(res)
-        table = html.find(".//div[@id='download_content']/table/tbody")
+        table = html.find(".//div[@id='download_content']/table")
         return(table)
