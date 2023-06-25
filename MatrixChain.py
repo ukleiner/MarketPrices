@@ -1,4 +1,5 @@
 import os
+import re
 import gzip
 import xml.etree.ElementTree as ET
 import requests
@@ -9,6 +10,7 @@ from loguru import logger
 from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
 from Chain import Chain
 
+removeExtrasR = re.compile(r'-001$')
 class MatrixChain(Chain):
     '''
     The basic functions each Chain should implement
@@ -68,13 +70,13 @@ class MatrixChain(Chain):
                     link = "".join(link.split()).replace('\\', '/')
                     link = f'{self.url}/{link}'
                 else:
-                    if self.priceR.search(elem.text):
+                    if elem.text is not None and self.priceR.search(elem.text):
                         fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
                         if fileDate <= updateDate or firstOfLast == elem.text:
                             continuePaging = False
                             self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
                             break
-                        priceFileName = elem.text
+                        priceFileName = removeExtrasR.sub('', elem.text)
 
                 if priceFileName is not None and link is not None:
                     links.append({'link': link, 'name': priceFileName})
@@ -112,7 +114,6 @@ class MatrixChain(Chain):
         if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
             raise NoSuchStoreException
 
-        self._log(f'link {link}')
         return(self._download_gz(storeFileName, link))
 
     def obtainStores(self, fn):
@@ -140,7 +141,9 @@ class MatrixChain(Chain):
         for store in storesElem:
             chainId = int(store.find('ChainID').text)
             # TODO manual override for Victory, wrong chain ID
-            if self.name != 'Victory' and (self.chainId is not None and chainId != self.chainId):
+            if self.name == 'Victory':
+                chainId = self.chainId
+            if self.chainId is not None and chainId != self.chainId:
                 # chainId in file should be like setup
                 logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
                 raise WrongChainFileException
@@ -182,7 +185,7 @@ class MatrixChain(Chain):
             Side effects:
         '''
 
-        self._log(f"searching for table for fiel type {fType}")
+        self._log(f"searching for table for file type {fType}")
         r = self.session.get(f'{self.url}/NBCompetitionRegulations.aspx', params={
             'code': self.chainId,
             'fileType': fType
