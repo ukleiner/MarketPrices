@@ -50,43 +50,17 @@ class MegaChain(Chain):
         '''
         if updateDate is None:
             updateDate = self._getLatestDate()
-        folders = self._getDateFolders()
-        dates = [folder.text[:-1] for folder in folders]
-        self._log(dates)
-        raise Exception
-
-        
-        table = self._getInfoTable()
+        folders = self._getFolderContent(reFilter=dateLinkR)
+        relFolders = [folder for folder in folders if self._todatetime(folder[:-1]) > updateDate]
         links = []
-        link = None
-        priceFileName = None
-        skip = False
-        for elem in table.iter():
-            if elem.tag == "tr":
-                link = None
-                priceFileName = None
-                skip = False
-            elif skip:
-                continue
-            elif elem.tag == "td":
-                aElem = elem.find('a')
-                if aElem is not None:
-                    link = aElem.get('href')
-                    link = "".join(link.split()).replace('\\', '/')
-                    link = f'{self.url}/{link}'
-                else:
-                    if elem.text is not None and self.priceR.search(elem.text):
-                        fileDate = self._todatetime(self.dateR.search(elem.text).group(1))
-                        if fileDate <= updateDate or firstOfLast == elem.text:
-                            continuePaging = False
-                            self._log(f"Stop paging, reached fileDate: {fileDate}, repeated fetched: {firstOfLast == elem.text}")
-                            break
-                        priceFileName = removeExtrasR.sub('', elem.text)
-
-                if priceFileName is not None and link is not None:
-                    links.append({'link': link, 'name': priceFileName})
-                    self._log(f"Found price file {priceFileName}")
-                    skip = True
+        for folder in folders:
+            date = self._todatetime(folder[:-1])
+            if date < updateDate:
+                self._log(f"Stop paging, reached foldr date: {folder}")
+                break
+            files = self._getFolderContent(folder=folder, reFilter=self.priceR)
+            self._log(f"Found {len(files)} links in folder {folder}")
+            links = links + [{'link': f'{self.url}/{folder}{file}', 'name': file} for file in files]
         return links, False
 
     def getStoreFile(self):
@@ -123,51 +97,49 @@ class MegaChain(Chain):
                 list of Item objects
         '''
         self._log(f"Obtaining stores from {fn}")
+        with gzip.open(fn, 'rt', encoding='utf-16') as f:
+            data = f.read()
+            context = ET.fromstring(data)
+        chainId = int(context.find('.//ChainId').text)
+        if self.chainId is not None and chainId != self.chainId:
+            # chainId in file should be like setup
+            logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
+            raise WrongChainFileException
+        try:
+            self.chain = self._getChain(chainId)
+        except TypeError:
+            self.chain = self._insertChain(chainId)
+
         subchains = self._getSubchains(self.chain)
         stores = self._getStores(self.chain)
 
+        subchainsElem = context.find('.//SubChains')
         storesIns = {}
         storeLinks = {}
-
-        with gzip.open(fn, 'rt') as f:
-            data = f.read()
-            context = ET.fromstring(data)
-        storesElem = context.find('.//Branches')
-        for store in storesElem:
-            chainId = int(store.find('ChainID').text)
-            # TODO manual override for Victory, wrong chain ID
-            if self.name == 'Victory':
-                chainId = self.chainId
-            if self.chainId is not None and chainId != self.chainId:
-                # chainId in file should be like setup
-                logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
-                raise WrongChainFileException
-            try:
-                self.chain = self._getChain(chainId)
-            except TypeError:
-                self.chain = self._insertChain(chainId)
-
-            storeId = int(store.find("StoreID").text)
-            if storeId in stores:
-                continue
-
-            subchainId = store.find('SubChainID').text
-            if subchainId not in subchains:
-                scname = store.find('SubChainName').text
-                subchain = self._insertSubchain(self.chain, subchainId, scname)
+        for sc in subchainsElem:
+            subchainId = int(sc.find('SubChainId').text)
+            if subchainId in subchains:
+                subchain = subchains[subchainId]
+            else:
+                subchainName = int(sc.find('SubChainName').text)
+                subchain = self._insertSubchain(self.chain, subchainId, subchainName)
                 subchains[subchainId] = subchain
 
-            subchain = subchains[subchainId]
-            storeName = store.find("StoreName").text
-            city = store.find("City").text
+            storesElem = sc.find('Stores')
+            for store in storesElem:
+                storeId = int(store.find("StoreId").text)
+                if storeId in stores:
+                    continue
+                storeName = store.find("StoreName").text
+                city = store.find("City").text
 
-            storesIns[storeId] = [self.chain, storeId, storeName, city]
-            storeLinks[storeId] = subchain
+                storesIns[storeId] = [self.chain, storeId, storeName, city]
+                storeLinks[storeId] = subchain
 
         self._insertStores(storesIns, storeLinks)
 
     # ========== PRIVATE ==========
-    def _getFolderContent(self, reFilter, folder=None):
+    def _getFolderContent(self, reFilter, folder=''):
         '''
             In MegaChain interface get links to data
             ---------------------
@@ -182,21 +154,19 @@ class MegaChain(Chain):
         '''
 
         self._log(f"searching for table for files in folder {folder} regex {reFilter}")
-        # r = self.session.get(f'{self.url}/{folder}')
-        # res = r.text
-        with open("test.html", "r") as f:
-            res = f.read()
+        r = self.session.get(f'{self.url}/{folder}')
+        res = r.text
         html = etree.HTML(res)
         linksXml = html.findall(".//td[@valign='top']/a")
         if reFilter is None:
             relLinks = linksXml
         else:
-            relLinks = [linkXml for linkXml in linksXml if reFilter.match(linkXml.attrib['href'])]
+            relLinks = [linkXml.attrib['href'] for linkXml in linksXml if reFilter.match(linkXml.attrib['href'])]
         return(relLinks)
 
 class YBitan(MegaChain):
     def __init__(self, db):
         name = "YBitan"
         url = "http://publishprice.ybitan.co.il"
-        chainId = "7290725900003"
+        chainId = 7290725900003
         super().__init__(db, url, name, chainId)
