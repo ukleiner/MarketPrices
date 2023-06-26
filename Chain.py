@@ -1,3 +1,4 @@
+import time
 import os
 import io
 import re
@@ -14,6 +15,8 @@ from loguru import logger
 from CustomExceptions import WrongChainFileException, WrongStoreFileException, NoStoreException, NoSuchStoreException
 from Store import Store
 
+MAX_SLEEPS = 3
+SLEEP_SECS = 30
 GZIP_MAGIC_NUMBER = b'\x1f\x8b'
 ZIP_MAGIC_NUMBER = b'PK'
 class Chain:
@@ -87,6 +90,7 @@ class Chain:
                 firstOfLast = links[0]['name']
             downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
             downloaded = downloaded + downloaded_files
+        downloaded = [d for d in downloaded if d is not None]
         return(downloaded)
 
     def download_page(self, page, updateDate=None, firstOfLast=None):
@@ -285,7 +289,20 @@ class Chain:
                 downloads file
         '''
         self._log(f"Downloading file {link}")
-        data = self.session.get(link, verify=False)
+        counter = 0
+        while True:
+            try:
+                data = self.session.get(link, verify=False)
+                break
+            except requests.exceptions.ConnectionError:
+                if counter < MAX_SLEEPS:
+                    counter = counter + 1
+                    self._log("ConnectionError with {link}, trying sleeping for {SLEEP_SECS} seconds try #{counter}
+                    time.sleep(SLEEP_SECS)
+                else:
+                    self._log("Too many ConnectionErrors with {link}, skipping it")
+                    return None
+
         content = data.content
         filename = f'{self.dirname}/{fn}.gz'
 
