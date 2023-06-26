@@ -181,5 +181,5 @@ class ShefaBirkat(BinaChain):
         url = "https://shefabirkathashem.binaprojects.com"
         name = 'ShefaBirkat'
         chainId = 7290058134977
-        codeCategoryR = re.compile(r'\d{3}')
+        codeCategoryR = re.compile(r'\d{3,4}')
         super().__init__(db, url, name, chainId, codeCategoryR=codeCategoryR)
