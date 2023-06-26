@@ -137,7 +137,7 @@ class MatrixChain(Chain):
         with gzip.open(fn, 'rt') as f:
             data = f.read()
             context = ET.fromstring(data)
-        storesElem = context.find('.//Branches')
+        storesElem = context.findall('.//Branches')
         for store in storesElem:
             chainId = int(store.find('ChainID').text)
             # TODO manual override for Victory, wrong chain ID
