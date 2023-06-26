@@ -205,7 +205,6 @@ class DorAlon(CerberusChain):
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        # TODO add filtering, many meat Items
         url = "https://url.retail.publishedprices.co.il"
         username = "doralon"
         password = ''
@@ -247,7 +246,6 @@ class OsherAd(CerberusChain):
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        # TODO add filtering, many meat Items
         url = "https://url.retail.publishedprices.co.il"
         username = "osherad"
         password = ''
