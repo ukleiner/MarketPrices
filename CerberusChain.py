@@ -100,7 +100,7 @@ class CerberusChain(Chain):
         if os.path.exists(f"{self.dirname}/{storeFileName}"):
             raise NoSuchStoreException
 
-        return(self._download_xml(storeFileName, link))
+        return(self._download_gz(storeFileName, link))
 
     def obtainStores(self, fn):
         '''

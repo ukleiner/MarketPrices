@@ -270,16 +270,6 @@ class Chain:
         cur.execute(query, (chain,))
         return({ store: sid for sid, store in cur.fetchall()})
 
-    def _download_xml(self, fn, link):
-        data = self.session.get(link, verify=False)
-        content = data.content
-        # content = b''.join(data.content.split('\x00'))
-        filename = f'{self.dirname}/{fn}'
-        with open(filename, 'wb') as f:
-            f.write(content)
-            self._log(f"Saved to {filename}")
-        return filename
-
     def _download_gz(self, fn, link):
         '''
             Download a gzip file
