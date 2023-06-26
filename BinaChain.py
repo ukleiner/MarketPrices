@@ -175,3 +175,11 @@ class ShukHayir(BinaChain):
         chainId = 7290058148776
         codeCategoryR = re.compile(r'\d{3}')
         super().__init__(db, url, name, chainId, codeCategoryR=codeCategoryR)
+
+class ShefaBirkat(BinaChain):
+    def __init__(self, db):
+        url = "https://shefabirkathashem.binaprojects.com"
+        name = 'ShefaBirkat'
+        chainId = 7290058134977
+        codeCategoryR = re.compile(r'\d{3}')
+        super().__init__(db, url, name, chainId, codeCategoryR=codeCategoryR)
