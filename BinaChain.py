@@ -2,7 +2,6 @@ import os
 import datetime
 import re
 import json
-from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
 import requests
@@ -107,12 +106,11 @@ class BinaChain(Chain):
             Return:
                 list of Item objects
         '''
+        # TODO fix this, no zip file needed
         self._log(f"Obtaining stores from {fn}")
-        with ZipFile(fn) as myzip:
-            realName = f"{fn.split('/')[-1][:-3]}.xml"
-            with myzip.open(realName) as f:
-                data = f.read()
-                context = ET.fromstring(data)
+        with gzip.open(fn, 'rt') as f:
+            data = f.read()
+            context = ET.fromstring(data)
 
         chainId = int(context.find('.//ChainId').text)
         if self.chainId is not None and chainId != self.chainId:
