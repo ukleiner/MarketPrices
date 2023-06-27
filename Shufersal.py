@@ -1,8 +1,12 @@
 import os
+import gzip
 import xml.etree.ElementTree as ET
-
 import requests
+
 from lxml import etree
+from loguru import logger
+
+from CustomExceptions import WrongChainFileException, NoStoreException, NoSuchStoreException
 
 from Chain import Chain
 

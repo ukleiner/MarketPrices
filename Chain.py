@@ -40,6 +40,9 @@ class Chain:
         self.storeR = re.compile('^Stores')
         self.dateR = re.compile('-(\d{8})\d{4}')
 
+        if not os.path.exists(self.dirname):
+            os.makedirs(self.dirname)
+            self._log("Data folder created")
         self._log(f"Construing {self.name} chain with {self.username}:{self.password}@{self.url}, searching for products from {self.targetManu}")
 
         self.session = self.login()
