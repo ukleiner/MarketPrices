@@ -45,6 +45,7 @@ class Store:
         try:
             self._storeDetails(self.context)
         except AttributeError:
+            # TODO problem forShukHayir
             logger.info(f"File {fn} not an xml Store file")
             raise WrongStoreFileException
         self._log(f"Inited")

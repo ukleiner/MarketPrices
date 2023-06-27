@@ -1,4 +1,6 @@
+# TODO downloading twice file for same date, fix?
 import os
+import gzip
 import datetime
 import re
 import json

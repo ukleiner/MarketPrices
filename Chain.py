@@ -297,7 +297,7 @@ class Chain:
             except requests.exceptions.ConnectionError:
                 if counter < MAX_SLEEPS:
                     counter = counter + 1
-                    self._log("ConnectionError with {link}, trying sleeping for {SLEEP_SECS} seconds try #{counter}
+                    self._log("ConnectionError with {link}, trying sleeping for {SLEEP_SECS} seconds try #{counter}")
                     time.sleep(SLEEP_SECS)
                 else:
                     self._log("Too many ConnectionErrors with {link}, skipping it")
