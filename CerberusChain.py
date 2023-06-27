@@ -1,7 +1,7 @@
 import os
 import re
+import gzip
 from io import BytesIO
-from zipfile import ZipFile
 import requests
 
 import xml.etree.ElementTree as ET
