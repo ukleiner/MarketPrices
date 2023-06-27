@@ -192,11 +192,16 @@ class Store:
             Side effects:
                 sets the store values in the object
         '''
-        fileChain = int(context.find('ChainID').text)
+        try:
+            fileChain = int(context.find('ChainID').text)
+            self.subChain = int(context.find('SubChainID').text)
+            self.storeId = int(context.find('StoreID').text)
+        except AttributeError:
+            fileChain = int(context.find('ChainId').text)
+            self.subChain = int(context.find('SubChainId').text)
+            self.storeId = int(context.find('StoreId').text)
         if fileChain != self.chainId:
             raise WrongChainFileException
-        self.subChain = int(context.find('SubChainID').text)
-        self.storeId = int(context.find('StoreID').text)
         try:
             self.store = self.getStore()
         except TypeError:
