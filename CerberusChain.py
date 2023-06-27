@@ -177,7 +177,6 @@ class RamiLevy(CerberusChain):
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "https://url.retail.publishedprices.co.il"
         username = "RamiLevi"
         password = ''
         name = 'RamiLevy'
@@ -185,68 +184,63 @@ class RamiLevy(CerberusChain):
         manu = "ביכורי השקמה"
         itemCodes = [7290000012346]
         codeCategoryR = re.compile("7290000000")
-        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)
+        super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class Dabach(CerberusChain):
     '''
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "https://url.retail.publishedprices.co.il"
         username = "SalachD"
         password = '12345'
         name = 'Dabach'
         chainId = 7290526500006
         codeCategoryR = re.compile("729000000")
-        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)
+        super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class DorAlon(CerberusChain):
     '''
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "https://url.retail.publishedprices.co.il"
         username = "doralon"
         password = ''
         name = 'DorAlon'
         chainId = 7290492000005
         manu = "חקלאי"
         itemCodes = None
-        super().__init__(db, url, username, password, name, chainId, manu, itemCodes)
+        super().__init__(db, username, password, name, chainId, manu, itemCodes)
 
 class HaziHinam(CerberusChain):
     '''
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "https://url.retail.publishedprices.co.il"
         username = "HaziHinam"
         password = ''
         name = 'HaziHinam'
         chainId = 7290700100008
         codeCategoryR = re.compile(r'^\d{1,4}')
-        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)
+        super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class Keshet(CerberusChain):
     '''
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "https://url.retail.publishedprices.co.il"
         username = "Keseht"
         password = ''
         name = 'Keseht'
         chainId = 7290785400000
         codeCategoryR = re.compile(r'>1?\d{1,2}<')
 
-        super().__init__(db, url, username, password, name, chainId, codeCategoryR)
+        super().__init__(db, username, password, name, chainId, codeCategoryR)
 
 class OsherAd(CerberusChain):
     '''
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "https://url.retail.publishedprices.co.il"
         username = "osherad"
         password = ''
         name = 'OsherAd'
@@ -254,33 +248,31 @@ class OsherAd(CerberusChain):
         manu = None
         itemCodes = None
         codeCategoryR = re.compile("7290000999")
-        super().__init__(db, url, username, password, name, chainId, manu, codeCategory=codeCategoryR)
+        super().__init__(db, username, password, name, chainId, manu, codeCategory=codeCategoryR)
 
 class StopMarket(CerberusChain):
     '''
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "https://url.retail.publishedprices.co.il"
         username = "Stop_Market"
         password = ''
         name = 'StopMarket'
         chainId = 7290639000004
         codeCategoryR = re.compile(r'>\d{2,3}<')
-        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)
+        super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class TivTaam(CerberusChain):
     '''
     The basic functions each Chain should implement
     '''
     def __init__(self, db):
-        url = "https://url.retail.publishedprices.co.il"
         username = "TivTaam"
         password = ''
         name = 'TivTaam'
         chainId = 7290873255550
         codeCategoryR = re.compile(r'\d{1,7}')
-        super().__init__(db, url, username, password, name, chainId, codeCategoryR=codeCategoryR)
+        super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class Yohananof(CerberusChain):
     '''
@@ -288,11 +280,10 @@ class Yohananof(CerberusChain):
     '''
     def __init__(self, db):
         # TODO add filtering, many meat Items
-        url = "https://url.retail.publishedprices.co.il"
         username = "yohananof"
         password = ''
         name = 'Yohananof'
         chainId = 7290803800003
         manu = "משתנה"
         itemCodes = None
-        super().__init__(db, url, username, password, name, chainId, manu=manu, itemCodes=itemCodes)
+        super().__init__(db, username, password, name, chainId, manu=manu, itemCodes=itemCodes)
