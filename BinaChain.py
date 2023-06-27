@@ -35,7 +35,7 @@ class BinaChain(Chain):
             Uses:
             =====================
             Return:
-                1. list of dics containing link to download and file name
+                1. list of dics containing link to download and file name, and refreshing paths (priors)
                 2. should the paging continue
             Side effects:
         '''
@@ -66,7 +66,8 @@ class BinaChain(Chain):
                 break
 
             link = f'{self.url}/Download/{fn}'
-            links.append({ 'link': link, 'name': fn[:-3] })
+            prior = f'{self.url}/Download.aspx?FileNm={fn}'
+            links.append({ 'prior': prior, 'link': link, 'name': fn[:-3] })
 
         updateDate = fileDate
         return links, continuePaging
@@ -93,10 +94,11 @@ class BinaChain(Chain):
 
         storeFileName = fileJson['FileNm']
         link = f'{self.url}/Download/{storeFileName}'
+        prior = f'{self.url}/Download.aspx?FileNm={storeFileName}'
         if os.path.exists(f"{self.dirname}/{storeFileName}"):
             raise NoSuchStoreException
 
-        return(self._download_gz(storeFileName[:-3], link))
+        return(self._download_gz(storeFileName[:-3], link, prior=prior))
 
     def obtainStores(self, fn):
         '''

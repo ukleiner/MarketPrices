@@ -88,7 +88,7 @@ class Chain:
                 firstOfLast = None
             else:
                 firstOfLast = links[0]['name']
-            downloaded_files = [self._download_gz(item['name'], item['link']) for item in links]
+            downloaded_files = [self._download_gz(item['name'], item['link'], prior=item.get('prior', None)) for item in links]
             downloaded = downloaded + downloaded_files
         downloaded = [d for d in downloaded if d is not None]
         return(downloaded)
@@ -274,13 +274,14 @@ class Chain:
         cur.execute(query, (chain,))
         return({ store: sid for sid, store in cur.fetchall()})
 
-    def _download_gz(self, fn, link):
+    def _download_gz(self, fn, link, prior=None):
         '''
             Download a gzip file
             ---------------------
             Parameters:
                fn - name to save
                link - where to download from
+               prior - some sites (bina chains) require server-side refreshing
             Uses:
             =====================
             Return:
@@ -292,6 +293,9 @@ class Chain:
         counter = 0
         while True:
             try:
+                if prior is not None:
+                    self.session.get(prior, verify=False)
+                    self._log("Accessing refreshing point (prior) at {prior}")
                 data = self.session.get(link, verify=False)
                 break
             except requests.exceptions.ConnectionError:
