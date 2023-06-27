@@ -169,4 +169,22 @@ class YBitan(MegaChain):
         name = "YBitan"
         url = "http://publishprice.ybitan.co.il"
         chainId = 7290725900003
-        super().__init__(db, url, name, chainId)
+        codeCategoryR = re.compile(r'2\d{3}')
+        itemCodes = [7290017291123]
+        super().__init__(db, url, name, chainId, itemCodes=itemCodes, codeCategoryR=codeCategoryR)
+
+class Mega(MegaChain):
+    def __init__(self, db):
+        name = "Mega"
+        url = "http://publishprice.mega.co.il"
+        chainId = 7290055700007
+        codeCategoryR = re.compile(r'1\d{3}')
+        super().__init__(db, url, name, chainId, itemCodes=itemCodes, codeCategoryR=codeCategoryR)
+
+class MegaMarket(MegaChain):
+    def __init__(self, db):
+        name = "MegaMarket"
+        url = "http://publishprice.mega-market.co.il"
+        chainId = 7290055700014
+        codeCategoryR = re.compile(r'1\d{3}')
+        super().__init__(db, url, name, chainId, itemCodes=itemCodes, codeCategoryR=codeCategoryR)
