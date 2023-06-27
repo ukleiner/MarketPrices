@@ -10,3 +10,5 @@ FreshMarket - bad file name for Stores
 KingStore - gz are actually zip, not all files available
 Matrixcatalong - different node names in the xml, (products, branches)
 Victory - wrong chain number in store file
+YBitan - Store file not gzip
+binaprojects limits access to files, need to go through Download.aspx?Nm=FileName before we can go to Download/FileName
