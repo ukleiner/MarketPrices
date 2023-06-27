@@ -127,7 +127,7 @@ class CerberusChain(Chain):
         except TypeError:
             self.chain = self._insertChain(chainId)
 
-        subchains = self._getSubchains(self.chain) # TODO check this
+        subchains = self._getSubchains(self.chain)
         stores = self._getStores(self.chain)
 
         subchainsElem = context.find('.//SubChains')

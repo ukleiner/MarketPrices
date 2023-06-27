@@ -110,7 +110,6 @@ class BinaChain(Chain):
             Return:
                 list of Item objects
         '''
-        # TODO fix this, no zip file needed
         self._log(f"Obtaining stores from {fn}")
         with gzip.open(fn, 'rt') as f:
             data = f.read()
@@ -126,7 +125,7 @@ class BinaChain(Chain):
         except TypeError:
             self.chain = self._insertChain(chainId)
 
-        subchains = self._getSubchains(self.chain) # TODO check this
+        subchains = self._getSubchains(self.chain)
         stores = self._getStores(self.chain)
 
         subchainsElem = context.find('.//SubChains')
