@@ -18,14 +18,13 @@ import datetime
 from loguru import logger
 
 from Shufersal import Shufersal
-from KingStore import KingStore
+from MegaChain import YBitan, Mega, MegaMarket
+from BinaChain import KingStore, ShukHayir, ShefaBirkat, ZolVeBegadol
 from CerberusChain import RamiLevy, Yohananof, Dabach, DorAlon, HaziHinam, Keshet, OsherAd, StopMarket, TivTaam, Yohananof
-from MatrixChain import Victory
+from MatrixChain import Victory, HaShuk
 from DBConn import DB
 
-_fn = "./data/Shufersal/PriceFull7290027600007-001-202306070300.xml"
-_storefn = "./data/Shufersal/Stores7290027600007-000-202306110201.xml"
-_targetManu = "קטיף."
+TESTING = False
 
 def SAX_obtain(fn, targetManu):
     '''
@@ -109,22 +108,34 @@ def main():
 
 def init_chains(db):
     chains = []
-    shufersal = Shufersal(db)
-    ramiLevy = RamiLevy(db)
-    chains.append(shufersal, ramiLevy)
+# from MegaChain import YBitan, Mega, MegaMarket
+# from BinaChain import KingStore, ShukHayir, ShefaBirkat, ZolVeBegadol
+# from CerberusChain import RamiLevy, Yohananof, Dabach, DorAlon, HaziHinam, Keshet, OsherAd, StopMarket, TivTaam, Yohananof
+# from MatrixChain import Victory, HaShuk
+    chains.append(Shufersal(db))
+    chains.append(RamiLevy(db))
+    chains.append(Yohananof(db))
+    chains.append(KingStore(db))
+    chains.append(YBitan(db))
+    chains.append(Victory(db))
     return chains
 
 @logger.catch
 def testing():
     dbc = DB()
-    victory = Victory(dbc)
+    yBitan = YBitan(dbc)
+    yBitan.scanStores()
+    # shukHayir = ShukHayir(dbc)
+    # shukHayir.scanStores()
+    # victory = Victory(dbc)
     # tab = victory._getInfoTable(None)
-    victory.scanStores()
 
 if __name__ == '__main__':
     logger.add("./logs/scanning_{time}.log", rotation="03:00", compression="zip", enqueue=True, filter=lambda record: record["level"].no < 30, format="{time:YYYY-MM-DD HH:mm:ss.SSS}| {message}", level="INFO")
     logger.add("./logs/crash.log", backtrace=True, diagnose=True, level="WARNING")
     logger.info("Starting")
-    # main()
-    testing()
+    if TESTING:
+        testing()
+    else:
+        main()
     logger.info("stopped")
