@@ -113,7 +113,7 @@ class CerberusChain(Chain):
                 list of Item objects
         '''
         self._log(f"Obtaining stores from {fn}")
-        with gzip.open(fn, encoding='utf-16') as f:
+        with gzip.open(fn, 'rt', encoding='utf-16') as f:
             data = f.read()
             context = ET.fromstring(data)
 
