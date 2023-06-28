@@ -121,12 +121,12 @@ class BinaChain(Chain):
             logger.error(f"Chain {self.chainId}: file with wrong chain Id {chainId} supplied {fn}")
             raise WrongChainFileException
         try:
-            self.chain = self._getChain(chainId)
+            self.chainId = self._getChain(chainId)
         except TypeError:
-            self.chain = self._insertChain(chainId)
+            self.chainId = self._insertChain(chainId)
 
-        subchains = self._getSubchains(self.chain)
-        stores = self._getStores(self.chain)
+        subchains = self._getSubchains(self.chainId)
+        stores = self._getStores(self.chain)Id
 
         subchainsElem = context.find('.//SubChains')
         storesIns = {}
@@ -137,7 +137,7 @@ class BinaChain(Chain):
                 subchain = subchains[subchainId]
             else:
                 subchainName = int(sc.find('SubChainName').text)
-                subchain = self._insertSubchain(self.chain, subchainId, subchainName)
+                subchain = self._insertSubchain(self.chainId, subchainId, subchainName)
                 subchains[subchainId] = subchain
 
             storesElem = sc.find('Stores')
@@ -148,7 +148,7 @@ class BinaChain(Chain):
                 storeName = store.find("StoreName").text
                 city = store.find("City").text
 
-                storesIns[storeId] = [self.chain, storeId, storeName, city]
+                storesIns[storeId] = [self.chainId, storeId, storeName, city]
                 storeLinks[storeId] = subchain
 
         self._insertStores(storesIns, storeLinks)

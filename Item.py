@@ -1,13 +1,13 @@
 class Item:
-    def __init__(self, chain, store, datetime, xmlObject):
-        self.chain = chain
+    def __init__(self, chainId, store, datetime, xmlObject):
+        self.chainId = chainId
         self.store = store
         self.datetime = datetime
         self._strdate = self.datetime.strftime('%Y-%m-%d %H:%M')
         self._parse(xmlObject)
 
     def getChainItem(self):
-        return([self.chain, self.code, self.name, self.manu, self.units])
+        return([self.chainId, self.code, self.name, self.manu, self.units])
 
     def getPriceItem(self, item):
         return([self._strdate, self.store, item, self.update_date, self.price])

@@ -25,9 +25,8 @@ class DB:
 
     def createChains(self):
         query = '''CREATE TABLE IF NOT EXISTS chain (
-        id INTEGER PRIMARY KEY,
+        chainId INTEGER PRIMARY KEY,
         Timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        chainId INTEGER UNIQUE,
         chainName TEXT
         )
         '''
@@ -44,7 +43,7 @@ class DB:
         subchainId INTEGER,
         name TEXT,
         type INTEGER,
-        FOREIGN KEY(chain) REFERENCES chain(id),
+        FOREIGN KEY(chain) REFERENCES chain(chainId),
         UNIQUE(chain, subchainId)
         )
         '''
@@ -58,7 +57,7 @@ class DB:
         store INTEGER NOT NULL,
         name TEXT NOT NULL,
         city TEXT,
-        FOREIGN KEY(chain) REFERENCES chain(id),
+        FOREIGN KEY(chain) REFERENCES chain(chainId),
         UNIQUE(chain, store)
         )'''
         self.cur.execute(query)
@@ -85,7 +84,7 @@ class DB:
         name TEXT NOT NULL,
         manufacturer TEXT NOT NULL,
         units TEXT,
-        FOREIGN KEY(chain) REFERENCES chain(id),
+        FOREIGN KEY(chain) REFERENCES chain(chainId),
         UNIQUE(chain, code)
         )'''
         self.cur.execute(query)

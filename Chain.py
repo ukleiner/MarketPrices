@@ -27,7 +27,6 @@ class Chain:
         self.db = db
         self.name = name
         self.chainId = chainId
-        self.chain = None
         self.targetManu = manu
         self.itemCodes = itemCodes
         self.codeCategoryR = codeCategoryR
@@ -158,13 +157,13 @@ class Chain:
         for fn in files:
             storeFile = f"{self.dirname}/{fn}"
             try:
-                store = Store(self.db, storeFile, self.targetManu, self.itemCodes, self.codeCategoryR, self.chainId, self.chain)
+                store = Store(self.db, storeFile, self.targetManu, self.itemCodes, self.codeCategoryR, self.chainId)
             except NoStoreException:
                 self._log(f"Missing store from file {storeFile}")
                 try:
                     self.updateChain()
                     # store that was missing hasn't initiated, recap
-                    store = Store(self.db, storeFile, self.targetManu, self.itemCodes, self.codeCategoryR, self.chainId, self.chain)
+                    store = Store(self.db, storeFile, self.targetManu, self.itemCodes, self.codeCategoryR, self.chainId)
                 except NoSuchStoreException:
                     self._log(f"Store in file {storeFile} missing from latest stores file")
                     missingStore = True
@@ -240,7 +239,7 @@ class Chain:
         '''
         con = self.db.getConn()
         cur = con.cursor()
-        query = "SELECT id FROM chain WHERE chainId = ?"
+        query = "SELECT chainId FROM chain WHERE chainId = ?"
         cur.execute(query, (chain,))
         cid, = cur.fetchone()
         return cid
@@ -351,8 +350,8 @@ class Chain:
         query = "INSERT INTO chain (`chainId`, `chainName`) VALUES(?, ?)"
         cur.execute(query, (chain, self.name))
         con.commit()
-        self._log(f"Created new chain in db, {cur.lastrowid}")
-        return cur.lastrowid
+        self._log(f"Created new chain in db, {chain}")
+        return chain
 
     def _insertSubchain(self, chain, subchain, name):
         '''

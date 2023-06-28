@@ -11,7 +11,7 @@ from Item import Item
 
 dateR = re.compile('-(\d{12})')
 class Store:
-    def __init__(self, db, fn, targetManu, itemCodes, codeCategoryR, chainId, chain):
+    def __init__(self, db, fn, targetManu, itemCodes, codeCategoryR, chainId):
         '''
         Initialize a store inside a chain
         ---------------------
@@ -32,7 +32,6 @@ class Store:
         self.itemCodes = itemCodes
         self.codeCategoryR = codeCategoryR
         self.chainId = chainId
-        self.chain = chain
         logger.info(f"Start store for chain {self.chainId} using file {self.fn}")
         date = dateR.search(fn).group(1)
         self.datetime = datetime.datetime(int(date[0:4]), int(date[4:6]), int(date[6:8]), int(date[8:10]), int(date[10:12]))
@@ -95,7 +94,7 @@ class Store:
             self._log(f"Obtaining items from manufactuer {self.manu}")
             manuSearchPath = f'{manuSearch}[.="{self.manu}"]...'
             manuXmlItems = self.context.findall(manuSearchPath)
-            manuItems = [Item(self.chain, self.store, self.datetime, xmlItem) for xmlItem in manuXmlItems]
+            manuItems = [Item(self.chainId, self.store, self.datetime, xmlItem) for xmlItem in manuXmlItems]
             self._log(f"Found {len(manuItems)} manufacturer items")
 
         if self.itemCodes is not None:
@@ -104,7 +103,7 @@ class Store:
                 _items = self.context.findall(f'{itemSearch}/ItemCode[.="{code}"]...')
                 if len(_items) > 0:
                     xmlItem = _items[0]
-                    codeItems.append(Item(self.chain, self.store, self.datetime, xmlItem))
+                    codeItems.append(Item(self.chainId, self.store, self.datetime, xmlItem))
             self._log(f"Found {len(codeItems)} items with code {code}")
 
         if self.codeCategoryR is not None:
@@ -114,7 +113,7 @@ class Store:
             for _item in _catItems:
                 code = _item.find('ItemCode').text
                 if self.codeCategoryR.search(code) is not None:
-                    catItems.append(Item(self.chain, self.store, self.datetime, _item))
+                    catItems.append(Item(self.chainId, self.store, self.datetime, _item))
             self._log(f"Found {len(catItems)} code category items")
 
 
@@ -221,7 +220,7 @@ class Store:
         con = self.db.getConn()
         cur = con.cursor()
         query = f"SELECT id, code FROM chainItem WHERE chain = ? AND code IN ({','.join(['?']*len(itemCodes))})"
-        cur.execute(query, [self.chain] + itemCodes)
+        cur.execute(query, [self.chainId] + itemCodes)
         return cur.fetchall()
 
     def _insertChainItems(self, items):
