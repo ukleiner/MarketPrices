@@ -173,7 +173,10 @@ class Store:
         price (`filedate`, `store`, `item`,`update_date`,`price`)
         VALUES(?,?,?,?,?)'''
         cur.executemany(query, prices)
-        con.commit()
+        try:
+            con.commit()
+        except sqlite3.IntegrityError as e:
+            logger.exception(f"Store {self.storeId}@{self.chainId}: {mes}")
         insPrices = cur.rowcount
         self._log(f"Logged {insPrices} item prices")
 
