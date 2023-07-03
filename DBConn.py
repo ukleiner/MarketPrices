@@ -10,7 +10,7 @@ class DB:
     def getConn(self):
         return self.con
 
-    def dbStruct(self):
+    def dbStruct(self, item_file, linker_file):
         self.cur = self.con.cursor()
         self.createChains()
         self.createSubchains()
@@ -19,7 +19,8 @@ class DB:
         self.createChainItems()
         self.createPrices()
         self.createItems()
-        self.createItemLinker()
+        self.populateItems(item_file)
+        self.createItemLinker(linker_file)
         self.con.commit()
         logger.info(f"Created db version {self.version}")
 
@@ -112,6 +113,15 @@ class DB:
         )'''
         self.cur.execute(query)
 
+    def populateItems(self, item_file):
+        query = '''INSERT INTO
+        item (`item_name`) VALUES (?)
+        '''
+        with open(item_file, 'r') as f:
+            itemList = f.read().splitLines()
+        self.cur.executemany(query, itemList)
+        logger.info(f"Logged {item_file} items")
+
     def createItemLinker(self):
         query = '''CREATE TABLE IF NOT EXISTS item_link(
         id INTEGER PRIMARY KEY,
@@ -123,3 +133,13 @@ class DB:
         )'''
         self.cur.execute(query)
 
+    def linkItems(self, linker_file):
+        query = '''INSERT INTO
+        item_link (`item`, `chainItem`) VALUES (?, ?)
+        '''
+        with open(linker_file, 'r') as f:
+            linkerList = f.read().splitLines()
+            linkerMat = [linker.split(',') for linker in linkerList]
+
+        self.cur.executemany(query, linkerMat)
+        logger.info(f"Logged {linker_file} link_items")
