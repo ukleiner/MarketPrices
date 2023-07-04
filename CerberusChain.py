@@ -284,6 +284,5 @@ class Yohananof(CerberusChain):
         password = ''
         name = 'Yohananof'
         chainId = 7290803800003
-        manu = "משתנה"
-        itemCodes = None
-        super().__init__(db, username, password, name, chainId, manu=manu, itemCodes=itemCodes)
+        codeCategoryR = re.compile(r'7290000000\d{3}')
+        super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
