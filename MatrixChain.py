@@ -203,7 +203,8 @@ class Victory(MatrixChain):
     def __init__(self, db):
         name = 'Victory'
         chainId = 7290696200003
-        itemCodes = [7290017291123]
+        itemCodes = [7290000654973, 7290010051267, 7290010051335,
+                7290017291123, 7290017291123, 7290010051168]
         codeCategoryR = re.compile(r'^2\d{3}')
         super().__init__(db, name, chainId, codeCategoryR=codeCategoryR, itemCodes = itemCodes)
 
@@ -214,5 +215,8 @@ class HaShuk(MatrixChain):
     def __init__(self, db):
         name = 'HaShuk'
         chainId = 7290661400001
-        manu = "ביכורי השדה צפון 1994 ג.ד. בעמ"
-        super().__init__(db, name, chainId, manu=manu)
+        itemCodes = [7290006265500, 7290016334494, 7290011276485,
+                7290016334166, 7290016334616, 7290018825006,
+                7290017586007]
+        codeCategoryR = re.compile(r'^\d{3}')
+        super().__init__(db, name, chainId, itemCodes=itemCodes, codeCategoryR=codeCategoryR)

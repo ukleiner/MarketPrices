@@ -158,7 +158,9 @@ class KingStore(BinaChain):
         url = "https://www.kingstore.co.il/Food_Law"
         name = 'KingStore'
         chainId = 7290058108879
-        codeCategoryR = re.compile(r'777\d{3}')
+        itemCodes = [7290016057072, 7290016334500, 7290016334166,
+                7290016334616]
+        codeCategoryR = re.compile(r'^777\d{3}')
         super().__init__(db, url, name, chainId, codeCategoryR=codeCategoryR)
 
 class ZolVeBegadol(BinaChain):
