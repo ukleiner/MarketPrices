@@ -63,7 +63,7 @@ class MegaChain(Chain):
             links = links + [{'link': f'{self.url}/{folder}{file}', 'name': file} for file in files]
         return links, False
 
-    def getStoreFile(self):
+    def getStoreFile(self, updating):
         '''
             Get file with chain stores for updating
             ---------------------
@@ -80,7 +80,7 @@ class MegaChain(Chain):
         folderFiles = self._getFolderContent(reFilter=self.storeR, folder=folder)
         storeFileName = folderFiles[0]
         link = f'{self.url}/{folder}{storeFileName}'
-        if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
+        if updating and os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
             raise NoSuchStoreException
 
         return(self._download_gz(storeFileName, link))

@@ -79,7 +79,7 @@ class Shufersal(Chain):
                     skip = True
         return links, continuePaging
 
-    def getStoreFile(self):
+    def getStoreFile(self, updating=True):
         '''
             Get file with chain stores for updating
             ---------------------
@@ -105,7 +105,7 @@ class Shufersal(Chain):
                         storeFileName = elem.text
                 if storeFileName is not None and link is not None:
                     break
-        if os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
+        if updating and os.path.exists(f"{self.dirname}/{storeFileName}.gz"):
             raise NoSuchStoreException
 
         return(self._download_gz(storeFileName, link))

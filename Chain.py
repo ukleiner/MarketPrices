@@ -48,7 +48,7 @@ class Chain:
         try:
            self._setChain()
         except TypeError:
-           self.updateChain()
+           self.updateChain(updating=False)
 
     def login(self):
         '''
@@ -186,11 +186,12 @@ class Chain:
                 else:
                     self._log(f"No manufacturer items in this store")
 
-    def getStoreFile(self):
+    def getStoreFile(self, updating):
         '''
             Get file with chain stores for updating
             ---------------------
             Parameters:
+                upating - updating or inserting chain, should store file be rejected if downloaded
             Uses:
             =====================
             Return:
@@ -212,11 +213,12 @@ class Chain:
         '''
         pass
 
-    def updateChain(self):
+    def updateChain(self, updating=True):
         '''
             Updates chain's stores with new file
             ---------------------
             Parameters:
+                updating - bool, should check file store for duplicate or inserting chain
             Uses:
             =====================
             Return:
@@ -224,7 +226,7 @@ class Chain:
             Side effects:
                 downloads file and updates db
         '''
-        storeFile = self.getStoreFile()
+        storeFile = self.getStoreFile(updating=updating)
         self.obtainStores(storeFile)
      # ========== PRIVATE ==========
     def _getChain(self, chain):

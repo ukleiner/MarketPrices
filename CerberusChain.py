@@ -73,7 +73,7 @@ class CerberusChain(Chain):
         filesData = [{ 'link': f'{self.url}/file/d/{rid}', 'name': rid[:-3]} for rid, date in allFilesData.items() if date > updateDate]
         return filesData, False
 
-    def getStoreFile(self):
+    def getStoreFile(self, updating):
         '''
             Get file with chain stores for updating
             ---------------------
@@ -97,7 +97,7 @@ class CerberusChain(Chain):
         storeFile = max(storeFiles, key=storeFiles.get)
         storeFileName = storeFile # xml
         link = f'{self.url}/file/d/{storeFile}'
-        if os.path.exists(f"{self.dirname}/{storeFileName}"):
+        if updating and os.path.exists(f"{self.dirname}/{storeFileName}"):
             raise NoSuchStoreException
 
         return(self._download_gz(storeFileName, link))

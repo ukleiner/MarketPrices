@@ -72,7 +72,7 @@ class BinaChain(Chain):
         updateDate = fileDate
         return links, continuePaging
 
-    def getStoreFile(self):
+    def getStoreFile(self, updating=True):
         '''
             Get file with chain stores for updating
             ---------------------
@@ -95,7 +95,7 @@ class BinaChain(Chain):
         storeFileName = fileJson['FileNm']
         link = f'{self.url}/Download/{storeFileName}'
         prior = f'{self.url}/Download.aspx?FileNm={storeFileName}'
-        if os.path.exists(f"{self.dirname}/{storeFileName}"):
+        if updating and os.path.exists(f"{self.dirname}/{storeFileName}"):
             raise NoSuchStoreException
 
         return(self._download_gz(storeFileName[:-3], link, prior=prior))
