@@ -10,7 +10,8 @@ class DB:
     def getConn(self):
         return self.con
 
-    def dbStruct(self, item_file, linker_file):
+    # def dbStruct(self, item_file, linker_file):
+    def dbStruct(self):
         self.cur = self.con.cursor()
         self.createChains()
         self.createSubchains()
@@ -19,8 +20,9 @@ class DB:
         self.createChainItems()
         self.createPrices()
         self.createItems()
-        self.populateItems(item_file)
-        self.createItemLinker(linker_file)
+        # self.populateItems(item_file)
+        self.createItemLinker()
+        # self.createItemLinker(linker_file)
         self.con.commit()
         logger.info(f"Created db version {self.version}")
 
@@ -133,7 +135,7 @@ class DB:
         )'''
         self.cur.execute(query)
 
-    def linkItems(self, linker_file):
+    def linkItems(self):
         query = '''INSERT INTO
         item_link (`item`, `chainItem`) VALUES (?, ?)
         '''

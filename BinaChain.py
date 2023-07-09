@@ -126,7 +126,7 @@ class BinaChain(Chain):
             self.chainId = self._insertChain(chainId)
 
         subchains = self._getSubchains(self.chainId)
-        stores = self._getStores(self.chain)Id
+        stores = self._getStores(self.chainId)
 
         subchainsElem = context.find('.//SubChains')
         storesIns = {}

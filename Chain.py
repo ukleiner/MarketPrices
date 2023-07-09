@@ -168,6 +168,8 @@ class Chain:
                     self._log(f"Store in file {storeFile} missing from latest stores file")
                     missingStore = True
                     # removed store, continue
+                except NoStoreException:
+                    self._log(f"Store in file {storeFile} missing and a glitch happened")
             except WrongStoreFileException:
                 missingStore = True
                 self._log(f"Store file {storeFile} can't init a store")
