@@ -393,7 +393,7 @@ class Chain:
         ORDER BY price.filedate DESC
         LIMIT 1
         '''
-        cur.execute(query, (self.chain,))
+        cur.execute(query, (self.chainId,))
         try:
             sqlUpdateDate, = cur.fetchone()
             updateDate = datetime.datetime.strptime(sqlUpdateDate, "%Y-%m-%d %H:%M")
