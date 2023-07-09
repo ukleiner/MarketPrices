@@ -289,6 +289,6 @@ class Yohananof(CerberusChain):
         chainId = 7290803800003
         itemCodes = [7290018024409, 693493028905, 7290016270273,
                 693493028912, 7290010051557, 7290010051502,
-                7290010051519
+                7290010051519]
         codeCategoryR = re.compile(r'^7290000000\d{3}')
         super().__init__(db, username, password, name, chainId, itemCodes=itemCodes, codeCategoryR=codeCategoryR)
