@@ -271,7 +271,7 @@ class TivTaam(CerberusChain):
         password = ''
         name = 'TivTaam'
         chainId = 7290873255550
-        codeCategoryR = re.compile(r'441\d{4}\d{1,7}')
+        codeCategoryR = re.compile(r'^441\d{4}')
         itemCodes = [619, 678, 7290000000608, 7290000000669,
                 7290000000603, 602, 7290000000632, 7290000000636,
                 7290006960320, 7290000995939, 7290000995953, 220]
