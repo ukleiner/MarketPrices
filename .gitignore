@@ -2,4 +2,4 @@ data/
 logs/
 *.sw*
 __pycache__/*
-
+*.ods
