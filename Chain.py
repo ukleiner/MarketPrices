@@ -170,21 +170,21 @@ class Chain:
                     # removed store, continue
                 except NoStoreException:
                     self._log(f"Store in file {storeFile} missing and a glitch happened")
+                    missingStore = True
             except WrongStoreFileException:
                 missingStore = True
                 self._log(f"Store file {storeFile} can't init a store")
 
             finally:
-                if missingStore:
-                    missingStore = False
-                    continue
-
-                items = store.obtainItems()
-                if len(items) > 0:
-                    prices = store.getPrices(items)
-                    store.insertPrices(prices)
-                else:
-                    self._log(f"No manufacturer items in this store")
+                if !missingStore:
+                    items = store.obtainItems()
+                    if len(items) > 0:
+                        prices = store.getPrices(items)
+                        store.insertPrices(prices)
+                    else:
+                        self._log(f"No manufacturer items in this store")
+                missingStore = False
+                store = None
 
     def getStoreFile(self, updating):
         '''
