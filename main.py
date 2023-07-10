@@ -106,14 +106,14 @@ def main(targetTime=0):
 
 @logger.catch
 # patch to re-read YBitan data
-def patch_YBitan():
+def patch_chains():
     dbc = DB()
     dbc.dbStruct()
     chains = init_chains(dbc)
-    logger.info(f"Scanning for YBitan")
-    ybitan = YBitan(db)
-    ybitan.scanStores(newDay=False)
-    logger.info(f"Finished YBitan patching")
+    logger.info(f"Patching chains")
+    for chain in chains:
+        chain.scanStores(newDay=False)
+        logger.info(f"Finished {chain.name} patching")
     main(datetime.datetime(2023, 7, 11, 4))
 
 def init_chains(db):
@@ -149,5 +149,6 @@ if __name__ == '__main__':
     if TESTING:
         testing()
     else:
-        main()
+        # main()
+        patch_chains()
     logger.info("stopped")
