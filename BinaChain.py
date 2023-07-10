@@ -160,7 +160,7 @@ class KingStore(BinaChain):
         chainId = 7290058108879
         itemCodes = [7290016057072, 7290016334500, 7290016334166,
                 7290016334616]
-        codeCategoryR = re.compile(r'^777\d{3}')
+        codeCategoryR = re.compile(r'^777\d{3}$')
         super().__init__(db, url, name, chainId, codeCategoryR=codeCategoryR)
 
 class ZolVeBegadol(BinaChain):
@@ -168,7 +168,7 @@ class ZolVeBegadol(BinaChain):
         url = "https://zolvebegadol.binaprojects.com"
         name = 'ZolVeBegadol'
         chainId = 7290058173198
-        codeCategoryR = re.compile(r'10[123]{1}\d{2}')
+        codeCategoryR = re.compile(r'10[123]{1}\d{2}$')
         super().__init__(db, url, name, chainId, codeCategoryR=codeCategoryR)
 
 class ShukHayir(BinaChain):
@@ -176,7 +176,7 @@ class ShukHayir(BinaChain):
         url = "https://shuk-hayir.binaprojects.com"
         name = 'ShukHayir'
         chainId = 7290058148776
-        codeCategoryR = re.compile(r'\d{3}')
+        codeCategoryR = re.compile(r'^\d{3}$')
         super().__init__(db, url, name, chainId, codeCategoryR=codeCategoryR)
 
 class ShefaBirkat(BinaChain):
@@ -184,5 +184,5 @@ class ShefaBirkat(BinaChain):
         url = "https://shefabirkathashem.binaprojects.com"
         name = 'ShefaBirkat'
         chainId = 7290058134977
-        codeCategoryR = re.compile(r'\d{3,4}')
+        codeCategoryR = re.compile(r'^\d{3,4}$')
         super().__init__(db, url, name, chainId, codeCategoryR=codeCategoryR)

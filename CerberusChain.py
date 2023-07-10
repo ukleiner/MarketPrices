@@ -183,7 +183,7 @@ class RamiLevy(CerberusChain):
         chainId = 7290058140886
         manu = "ביכורי השקמה"
         itemCodes = [7290000012346]
-        codeCategoryR = re.compile("^7290000000\d{3}")
+        codeCategoryR = re.compile("^7290000000\d{3}$")
         super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class Dabach(CerberusChain):
@@ -195,7 +195,7 @@ class Dabach(CerberusChain):
         password = '12345'
         name = 'Dabach'
         chainId = 7290526500006
-        codeCategoryR = re.compile("729000000")
+        codeCategoryR = re.compile("^729000000")
         super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class DorAlon(CerberusChain):
@@ -220,7 +220,7 @@ class HaziHinam(CerberusChain):
         password = ''
         name = 'HaziHinam'
         chainId = 7290700100008
-        codeCategoryR = re.compile(r'^\d{1,4}')
+        codeCategoryR = re.compile(r'^\d{1,4}$')
         super().__init__(db, username, password, name, chainId, codeCategoryR=codeCategoryR)
 
 class Keshet(CerberusChain):
@@ -233,7 +233,7 @@ class Keshet(CerberusChain):
         name = 'Keseht'
         chainId = 7290785400000
         itemCodes = [7290017487434,7290000000374,7290017487601,7290017487618]
-        codeCategoryR = re.compile(r'^1?\d{1,2}')
+        codeCategoryR = re.compile(r'^1?\d{1,2}$')
 
         super().__init__(db, username, password, name, chainId, itemCodes=itemCodes, codeCategoryR=codeCategoryR)
 
@@ -247,7 +247,7 @@ class OsherAd(CerberusChain):
         name = 'OsherAd'
         chainId = 7290103152017
         itemCodes = [7290017504001,7290018443330,7290018443323]
-        codeCategoryR = re.compile("^7290000999\d{3}")
+        codeCategoryR = re.compile("^7290000999\d{3}$")
         super().__init__(db, username, password, name, chainId, codeCategory=codeCategoryR)
 
 class StopMarket(CerberusChain):
@@ -271,7 +271,7 @@ class TivTaam(CerberusChain):
         password = ''
         name = 'TivTaam'
         chainId = 7290873255550
-        codeCategoryR = re.compile(r'^441\d{4}')
+        codeCategoryR = re.compile(r'^441\d{4}$')
         itemCodes = [619, 678, 7290000000608, 7290000000669,
                 7290000000603, 602, 7290000000632, 7290000000636,
                 7290006960320, 7290000995939, 7290000995953, 220]
@@ -290,5 +290,5 @@ class Yohananof(CerberusChain):
         itemCodes = [7290018024409, 693493028905, 7290016270273,
                 693493028912, 7290010051557, 7290010051502,
                 7290010051519]
-        codeCategoryR = re.compile(r'^7290000000\d{3}')
+        codeCategoryR = re.compile(r'^7290000000\d{3}$')
         super().__init__(db, username, password, name, chainId, itemCodes=itemCodes, codeCategoryR=codeCategoryR)
