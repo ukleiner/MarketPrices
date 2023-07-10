@@ -176,7 +176,7 @@ class Chain:
                 self._log(f"Store file {storeFile} can't init a store")
 
             finally:
-                if !missingStore:
+                if not missingStore:
                     items = store.obtainItems()
                     if len(items) > 0:
                         prices = store.getPrices(items)
