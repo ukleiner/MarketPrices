@@ -139,19 +139,21 @@ class Chain:
         self._log(f"Fetching {len(relFiles)} files")
         return relFiles
 
-    def scanStores(self):
+    def scanStores(self, newDay=True):
         '''
             Main entry point
             Scan prices files from stores and inserts prices to db
             ---------------------
             Parameters:
+                newDay - should download new files
             Uses:
             =====================
             Return:
             Side effects:
                 updates db
         '''
-        newFiles = self.download()
+        if newDay:
+            newFiles = self.download()
         files = self.fileList()
         missingStore = False
         for fn in files:

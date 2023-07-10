@@ -87,24 +87,34 @@ def timing_tests(fn, targetManu, n=10):
     print(t1, t2)
 
 @logger.catch
-def main():
+def main(targetTime=0):
     dbc = DB()
     dbc.dbStruct()
     chains = init_chains(dbc)
     # TODO Parallel this
     while True:
+        if datetime.datetime.now() < targetTime:
+            diff = int((targetTime - datetime.datetime.now()).total_seconds())
+            logger.info(f"Sleeping for {diff} seconds up to the next store update")
+            time.sleep(diff)
         start = datetime.date.today()
         logger.info(f"Scanning for day {start}")
         nextDay = start + datetime.timedelta(1)
         targetTime = datetime.datetime(nextDay.year, nextDay.month, nextDay.day, 4)
         for chain in chains:
             chain.scanStores()
-        if datetime.datetime.now() > targetTime:
-            pass
-        else:
-            diff = int((targetTime - datetime.datetime.now()).total_seconds())
-            logger.info(f"Sleeping for {diff} seconds up to the next store update")
-            time.sleep(diff)
+
+@logger.catch
+# patch to re-read YBitan data
+def patch_YBitan():
+    dbc = DB()
+    dbc.dbStruct()
+    chains = init_chains(dbc)
+    logger.info(f"Scanning for YBitan")
+    ybitan = YBitan(db)
+    ybitan.scanStores(newDay=False)
+    logger.info(f"Finished YBitan patching")
+    main(datetime.datetime(2023, 7, 11, 4))
 
 def init_chains(db):
     chains = []
